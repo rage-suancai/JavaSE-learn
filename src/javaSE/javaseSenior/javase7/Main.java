@@ -1,6 +1,6 @@
 package javaSE.javaseSenior.javase7;
 
-import javase7.people.People;
+import javaSE.javaseSenior.javase7.people.People;
 
 import java.io.*;
 

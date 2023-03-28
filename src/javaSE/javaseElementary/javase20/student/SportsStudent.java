@@ -1,6 +1,7 @@
 package javaSE.javaseElementary.javase20.student;
 
-import javaSE.javase20.service.Eat;
+
+import javaSE.javaseElementary.javase20.service.Eat;
 
 public class SportsStudent extends Student implements Eat {
 

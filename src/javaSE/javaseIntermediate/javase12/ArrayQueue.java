@@ -1,7 +1,5 @@
 package javaSE.javaseIntermediate.javase12;
 
-import javaSE.javase9.AbstractList;
-
 public class ArrayQueue<E> extends AbstractQueue<E> {
 
     private Object[] arr = new Object[4]; // 底层数组

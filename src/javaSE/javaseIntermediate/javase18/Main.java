@@ -1,11 +1,5 @@
 package javaSE.javaseIntermediate.javase18;
 
-import javaSE.javase12.ArrayQueue;
-
-import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * 集合类的使用
  * List列表

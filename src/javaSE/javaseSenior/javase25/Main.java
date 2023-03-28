@@ -1,10 +1,6 @@
 package javaSE.javaseSenior.javase25;
 
-import javase25.entity.Student;
-import sun.security.jca.GetInstance;
-
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 
