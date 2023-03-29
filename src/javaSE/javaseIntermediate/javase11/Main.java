@@ -2,17 +2,21 @@ package javaSE.javaseIntermediate.javase11;
 
 public class Main {
 
+    static LinkedStack<String> stack = new LinkedStack<>();
+
+    static void test1() {
+
+        stack.push("AAA");
+        stack.push("BBB");
+        stack.push("CCC");
+        while (!stack.isEmpty())
+            System.out.println(stack.pop());
+
+    }
+
     public static void main(String[] args) {
 
-        ArrayStack<String> stack = new ArrayStack<>();
-
-        stack.push("A");
-        stack.push("B");
-        stack.push("C");
-        System.out.println(stack.pop());
-        stack.push("D");
-
-        System.out.println("debug");
+        test1();
 
     }
 
