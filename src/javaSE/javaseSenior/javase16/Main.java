@@ -1,150 +1,168 @@
 package javaSE.javaseSenior.javase16;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 /**
- * ThreadLocal的使用
- * 既然每个线程都有一个自己的工作内存 那么能否只在自己的工作内存中创建变量仅供线程自己使用呢?
- *
- * 我们可以是ThreadLocal类 来创建工作内存中的变量 它将我们的变量值存储在内部(只能存储一个变量)
- * 不同的变量访问到ThreadLocal对象时 都只能获取到自己线程所属的变量
- *                  ThreadLocal<String> local = new ThreadLocal<>(); // 注意: 这是一个泛型类 存储类型为我们要存放的变量类型
- *
- *                  Thread thread1 = new Thread(() -> {
- *                      local.set("yxsnb"); // 将变量的值给予ThreadLocal
- *                      System.out.println("变量值已设定");
- *                      System.out.println(local.get()); // 尝试获取ThreadLocal中存放的变量
- *                  });
- *                  Thread thread2 = new Thread(() -> {
- *                      System.out.println(local.get()); // 尝试获取ThreadLocal中存放的变量
- *                  });
- *                  try {
- *                      thread1.start();
- *                      Thread.sleep(3000); // 间隔三秒
- *                      thread2.start();
- *                  } catch (InterruptedException e) {
- *                      e.printStackTrace();
- *                  }
- *
- * 上面的例子中 我们开启两个线程分别去访问ThreadLocal对象 我们发现 第一个线程存放的内容 第一个线程可以获取
- * 但是第二个线程无法获取 我们再来看看第一个线程存入后 第二个线程也存放 是否会覆盖第一个线程存放的内容:
- *                  Thread thread1 = new Thread(() -> {
- *                      local.set("yxsnb");
- *                      System.out.println("线程一变量值已设定");
- *                      try {
- *                          Thread.sleep(2000);
- *                      } catch (InterruptedException e) {
- *                          e.printStackTrace();
+ * 定时器
+ * 我们有时候会有这样的需求 我希望定时执行任务 比如三秒后执行 其实我们可以通过使用Thread.sleep()来实现:
+ *                      static void test1() {
+ *                          new TimerTask(() -> System.out.println("我是定时器"), 3000).start(); // 创建并启动此定时任务
  *                      }
- *                      System.out.println("线程一读取变量值");
- *                      System.out.println(local.get()); // 尝试获取ThreadLocal中存放的变量
- *                  });
- *                  Thread thread2 = new Thread(() -> {
- *                      local.set("yyds"); // 将变量的值给予ThreadLocal
- *                      System.out.println("线程二变量值已经设定");
- *                      System.out.println("线程二读取变量值"); // 尝试获取ThreadLocal中存放的变量
- *                      System.out.println(local.get());
- *                  });
- *                  try {
- *                      thread1.start();
- *                      Thread.sleep(1000);
- *                      thread2.start();
- *                  } catch (InterruptedException e) {
- *                      e.printStackTrace();
+ *
+ *                      public class TimerTask {
+ *                      Runnable task;
+ *                      long time;
+ *
+ *                      public TimerTask(Runnable runnable, long time) {
+ *                          this.task = runnable;
+ *                          this.time = time;
+ *                      }
+ *
+ *                      public void start() {
+ *                          new Thread(() -> {
+ *                              try {
+ *                                  Thread.sleep(time);
+ *                                  task.run(); // 休眠后在运行
+ *                              } catch (InterruptedException e) {
+ *                                  e.printStackTrace();
+ *                              }
+ *                          }).start();
+ *                      }
+ *
  *                  }
  *
- * 我们发现 即使线程而重新设定了值 也没有影响到线程一存放的值 所以说 不同线程向ThreadLocal存放数据
- * 只会存放在线程自己的工作空间中 而不会直接存放到主内存中 因此各个线程直接存放的内容互不干扰
+ * 我们通过自行封装一个TimeTask类 并在启动时 先休眠三秒钟 在执行我们传入的内容
+ * 那么现在我们希望 能否循环执行一个任务呢? 比如我希望每隔一秒执行异常代码 这样该怎么做呢?
+ *                  public void startRun() {
  *
- * 我们发现在线程中创建的子线程 无法获得父线程工作内存中的变量:
- *                  ThreadLocal<String> local = new ThreadLocal<>();
- *
- *                  Thread thread = new Thread(() -> {
- *                      local.set("yxsnb");
  *                      new Thread(() -> {
- *                          System.out.println(local.get());
+ *                          try {
+ *                              while (true) { // 无限循环执行
+ *                                  Thread.sleep(time);
+ *                                  task.run(); // 休眠后再运行
+ *                              }
+ *                          } catch (InterruptedException e) {
+ *                              e.printStackTrace();
+ *                          }
  *                      }).start();
- *                  });
- *                  thread.start();
  *
- * 我们可以使用InheritableThreadLocal来解决:
- *                  ThreadLocal<String> local = new InheritableThreadLocal<>();
+ *                  }
  *
- *                  Thread thread = new Thread(() -> {
- *                      local.set("yxsnb");
- *                      new Thread(() -> {
- *                          System.out.println(local.get());
- *                      }).start();
- *                  });
- *                  thread.start();
+ * 现在我们将单次执行放入到一个无限循环中 这样就能一直执行了 并且按照我们的间隔时间进行
  *
- * 在InheritableThreadLocal存放的内容 会自动向子线程传递
+ * 但是终究是我们自己实现 可能很多方面还没考虑到 java也为我们提供了一套自己的框架用于处理定时任务:
+ *                  static void test3() {
+ *
+ *                      Timer timer = new Timer(); // 创建定时器对象
+ *                      timer.schedule(new TimerTask() { // 注意: 这个是一个抽象类 不是接口 无法使用lambda表达式简化 只能使用匿名内部类
+ *                          @Override
+ *                          public void run() {
+ *                              System.out.println(Thread.currentThread().getName()); // 打印当前线程名称
+ *                          }
+ *                      }, 1000); // 执行一个延时任务
+ *
+ *                  }
+ *
+ * 我们可以通过创建一个Timer类来让它进行定时任务调度 我们可以通过此对象来创建任意类型的定时任务 包括延时任务 循环定时任务等
+ * 我们发现 虽然任务执行完成了 但是我们的程序并没有停止 这是因为Timer内存维护了一个任务队列和一个工作线程:
+ *                  public class Timer {
+ *
+ *                      private final TaskQueue queue=new TaskQueue()
+ *
+ *                      private final TimerThread thread=new TimerThread(queue);
+ *
+ *                      ...
+ *
+ *                  }
+ *
+ * TimerThread继承自Thread 是一个新创建的线程 在构造时自动启动:
+ *                  public Timer(String name) {
+ *                      thread.setName(name);
+ *                      thread.start();
+ *                  }
+ *
+ * 而它的run方法会循环地读取队列中是否还有任务 如果有任务依次执行 没有的话就暂时处于休眠状态:
+ *                  public void run() {
+ *                      try {
+ *                          mainLoop();
+ *                      } finally {
+ *                          // Someone killed this Thread, behave as if Timer cancelled
+ *                          synchronized(queue) {
+ *                              newTasksMayBeScheduled = false;
+ *                              queue.clear(); // Eliminate obsolete references
+ *                          }
+ *                      }
+ *                  }
+ *
+ *                  private void mainLoop() {
+ *                      while (true) {
+ *                          try {
+ *                              TimerTask task;
+ *                              boolean taskFired;
+ *                              synchronized(queue) {
+ *                                  // Wait for queue to become non-empty
+ *                                  while (queue.isEmpty() && newTasksMayBeScheduled) // 当队列为空同时没有被关闭时 会调用wait()方法暂时处于等待状态 当有新的任务时 会被唤醒
+ *                                      queue.wait();
+ *                                  if (queue.isEmpty())
+ *                                      break; // 当被唤醒后都没有任务时 就会结束循环 也就是结束工作线程
+ *                                          ...
+ *                  }
+ *
+ * newTasksMayBeScheduled实际上即使标记当前定时器是否关闭 当它为false时 表示已经不会在有新的任务到来 也就是关闭 我们可以通过调用cancel()方法来关闭它的工作线程:
+ *                  public void cancel() {
+ *                      synchronized(queue) {
+ *                          thread.newTasksMayBeScheduled = false;
+ *                          queue.clear();
+ *                          queue.notify();  // 唤醒wait使得工作线程结束
+ *                      }
+ *                  }
+ *
+ * 因此 我们可以在使用完成后 调用Timer的cancel()方法以正常退出我们的程序:
+ *                  Timer timer = new Timer();
+ *                  timer.schedule(new TimerTask() {
+ *                      @Override
+ *                      public void run() {
+ *                          System.out.println(Thread.currentThread().getName());
+ *                          timer.cancel(); // 结束
+ *                      }
+ *                  }, 1000);
  */
 public class Main {
 
     static void test1() {
-
-        ThreadLocal<String> local = new ThreadLocal<>();
-
-        /*Thread thread1 = new Thread(() -> {
-            local.set("yxsnb");
-            System.out.println("变量值已设定");
-            System.out.println(local.get());
-        });
-        Thread thread2 = new Thread(() -> {
-            System.out.println(local.get());
-        });
-        try {
-            thread1.start();
-            Thread.sleep(3000);
-            thread2.start();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }*/
-
-        Thread thread1 = new Thread(() -> {
-            local.set("yxsnb");
-            System.out.println("线程一变量值已设定");
-            try {
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            System.out.println("线程一读取变量值");
-            System.out.println(local.get());
-        });
-        Thread thread2 = new Thread(() -> {
-            local.set("yyds");
-            System.out.println("线程二变量值已经设定");
-            System.out.println("线程二读取变量值");
-            System.out.println(local.get());
-        });
-        try {
-            thread1.start();
-            Thread.sleep(1000);
-            thread2.start();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
+        new TimerTaskMe(() -> System.out.println("我是定时器"), 3000).start();
     }
 
     static void test2() {
+        new TimerTaskMe(() -> System.out.println("我是定时器"), 1000).startRun();
+    }
 
-        ThreadLocal<String> local1 = new ThreadLocal<>();
-        ThreadLocal<String> local2 = new InheritableThreadLocal<>();
+    static void test3() {
 
-        Thread thread = new Thread(() -> {
-            local2.set("yxsnb");
-            new Thread(() -> {
-                System.out.println(local2.get());
-            }).start();
-        });
-        thread.start();
+        /*Timer timer = new Timer();
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                System.out.println(Thread.currentThread().getName());
+            }
+        }, 1000);*/
+
+        Timer timer = new Timer();
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                System.out.println(Thread.currentThread().getName());
+                timer.cancel();
+            }
+        }, 1000);
 
     }
 
     public static void main(String[] args) {
         //test1();
-        test2();
+        //test2();
+        test3();
     }
 
 }

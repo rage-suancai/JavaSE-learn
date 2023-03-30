@@ -1,199 +1,73 @@
 package javaSE.javaseSenior.javase12;
 
 /**
- * 线程的优先级
- * 实际上 java程序中的每个线程并不是平均分配CPU时间的 为了使得线程资源分配更加合理 java采用的是抢占式调度方式 优先级越高的线程
- * 优先使用CPU资源 我们希望CPU花费更多时间去处理更重要的任务 而不太重要的任务 则可以先让出一部分资源 线程的优先级一般分为以下三种:
- *      > MIN_PRIORITY 最低优先级
- *      > MAX_PRIORITY 最高优先级
- *      > NOM_PRIORITY 常规优先级
- *                  Thread thread1 = new Thread(() -> {
- *                      System.out.println("线程开始运行");
- *                  });
- *                  thread1.start();
- *                  thread1.setPriority(Thread.MIN_PRIORITY); // 通过使用setPriority方法来设定优先级
+ * 线程锁和线程同步
+ * 在开始讲解线程同步之前 我们需要先了解一下多线程情况下java的内存管理
  *
- * 优先级越高的线程 获得CPU资源的概率会越大 并不是说一定优先级越高的线程先执行
+ * 线程之间的共享变量(比如之前悬念中value变量)存储主内存(main memory)中 每个线程都有一个私有的工作内存(本地内存)
+ * 工作内存中存储了该线程以读/写共享变量的副本 它类似于我们在计算机组成原理中学习的多处理器高速缓存机制:
  *
- * 线程的礼让和加入
- * 我们还可以在当前线程的工作不重要时 将CPU资源让位给其他线程 通过使用yield()方法来将当前资源让位给其他同优先级线程:
- *                  Thread thread1 = new Thread(() -> {
- *                      System.out.println("线程一开始运行");
- *                      for (int i = 0; i < 50; i++) {
- *                          if (i % 5 == 0) {
- *                              System.out.println("让位");
- *                              Thread.yield();
- *                          }
- *                          System.out.println("一打印: " + i);
- *                      }
- *                      System.out.println("线程一结束");
- *                  });
- *                  Thread thread2 = new Thread(() -> {
- *                      System.out.println("线程二开始运行");
- *                      for (int i = 0; i < 50; i++) {
- *                          System.out.println("二打印: " + i);
- *                      }
- *                  });
- *                  thread1.start();
- *                  thread2.start();
+ * 高速缓存通过保存内存中数据的副本来提供更加快速的数据访问 但是如果多个处理器的运算任务都涉及同一块内存区域
+ * 就可能导致各自的高速缓存数据不一致 在写回主内存时就会发生冲突 这就是引入高速缓存引发的新问题 称之为缓存一致性
  *
- * 观察结果 我们发现 在让位之后 尽可能多的在执行线程二的内容
+ * 实际上 java的内存模型也是这样类似设计的 当我们同时去操作一个共享变量时 如果仅仅是读取还好 但是如果同时写入内容 就会出现问题
+ * 好比说一个银行 如果我和我的朋友同时在银行取我账户里面的钱 难道取1000还可能吐2000出来吗 我们需要一种更加安全的机制来维持秩序 保证数据的安全性
  *
- * 当我们希望一个线程等待另一个线程执行完成后再继续进行 我们可以使用join()方法来实现线程的加入:
- *                  Thread thread1 = new Thread(() -> {
- *                      System.out.println("线程一开始运行");
- *                      for (int i = 0; i < 50; i++) {
- *                          System.out.println("一打印: " + i);
- *                      }
- *                      System.out.println("线程一结束");
- *                  });
- *                  Thread thread2 = new Thread(() -> {
- *                      System.out.println("线程二开始运行");
- *                      for (int i = 0; i < 50; i++) {
- *                          System.out.println("二打印: " + i);
- *                          if (i == 10) {
- *                              try {
- *                                  System.out.println("线程一加入到此线程");
- *                                  thread1.join(); // 在i==10时 让线程一加入 先完成线程一的内容 在继续当前内容
- *                              } catch (InterruptedException e) {
- *                                  e.printStackTrace();
- *                              }
- *                          }
- *                      }
- *                      System.out.println("线程二结束");
- *                  });
- *                  thread1.start();
- *                  thread2.start();
+ * 悬念破案
+ * 我们在来回顾一下之前留给大家的悬念:
+ *                  private static int value = 0;
+ *                  static void test1() {
  *
- * 我们发现 线程一加入后 线程二等待线程一执行的内容全部完成之后 再继续执行线程二的内容
- * 注意: 线程的加入只是等待另一个线程的完成 并不是将另一个线程和当前线程合并 我们来来看看:
- *                  Thread thread1 = new Thread(() -> {
- *                      System.out.println(Thread.currentThread().getName() + "开始运行");
- *                      for (int i = 0; i < 50; i++) {
- *                          System.out.println(Thread.currentThread().getName() + "打印: " + i);
+ *                      Thread thread1 = new Thread(() -> {
+ *                          for (int i = 0; i < 10000; i++) value++;
+ *                          System.out.println("线程一完成");
+ *                      });
+ *                      Thread thread2 = new Thread(() -> {
+ *                          for (int i = 0; i < 10000; i++) value++;
+ *                          System.out.println("线程二完成");
+ *                      });
+ *                      thread1.start();
+ *                      thread2.start();
+ *                      try {
+ *                          Thread.sleep(1000);
+ *                          System.out.println(value);
+ *                      } catch (InterruptedException e) {
+ *                          e.printStackTrace();
  *                      }
- *                      System.out.println(Thread.currentThread().getName() + "线程结束");
- *                  });
- *                  Thread thread2 = new Thread(() -> {
- *                      System.out.println(Thread.currentThread().getName() + "开始运行");
- *                      for (int i = 0; i < 50; i++) {
- *                          System.out.println(Thread.currentThread().getName() + i);
- *                          if (i == 10) {
- *                              try {
- *                                  System.out.println("线程一加入此线程");
- *                                  thread1.join(); // 在i==10时 让线程一加入 先完成线程一的内容 在继续当前内容
- *                              } catch (InterruptedException e) {
- *                                  e.printStackTrace();
- *                              }
- *                          }
- *                      }
- *                      System.out.println(Thread.currentThread() + "线程结束");
- *                  });
- *                  thread1.start();
- *                  thread2.start();
  *
- * 实际上 thread2线程只是暂时处于等待状态 当thread1执行结束时 thread2才开始继续执行 只是在效果上看起来好像两个线程合并为一个线程执行而已
+ *                  }
+ *
+ * 实际上 当两个线程同时读取value的时候 可能会同时拿到同样的值 而进行自增操作之后 也是同样的值 再写回主内存后 本来应该进行2次自增操作 实际上只执行了一次
+ *
+ * 那么要解决这样的问题 我们就必须采取某种同步机制 来限制不同线程对于共享变量的访问 我们希望的是保证共享变量value自增操作的原子性
+ * (原子性是指一个操作或多个操作要么全部执行 且执行的过程不会被任何因素打断 包括其他线程 要么就都不执行)
  */
 public class Main {
 
+    private static int value = 0;
     static void test1() {
 
-        Thread thread = new Thread(() -> {
-            System.out.println("线程一开始运行");
-        });
-        thread.start();
-        thread.setPriority(Thread.MIN_PRIORITY);
-
-    }
-
-    static void test2() {
-
         Thread thread1 = new Thread(() -> {
-            System.out.println("线程一开始运行");
-            for (int i = 0; i < 50; i++) {
-                if (i % 5 == 0) {
-                    System.out.println("让位");
-                    Thread.yield();
-                }
-                System.out.println("一打印: " + i);
-            }
-            System.out.println("线程一结束");
+            for (int i = 0; i < 10000; i++) value++;
+            System.out.println("线程一完成");
         });
         Thread thread2 = new Thread(() -> {
-            System.out.println("线程二开始运行");
-            for (int i = 0; i < 50; i++) {
-                System.out.println("二打印: " + i);
-            }
+            for (int i = 0; i < 10000; i++) value++;
+            System.out.println("线程二完成");
         });
         thread1.start();
         thread2.start();
-
-    }
-
-    static void test3() {
-
-        Thread thread1 = new Thread(() -> {
-            System.out.println("线程一开始运行");
-            for (int i = 0; i < 50; i++) {
-                System.out.println("一打印: " + i);
-            }
-            System.out.println("线程一结束");
-        });
-        Thread thread2 = new Thread(() -> {
-            System.out.println("线程二开始运行");
-            for (int i = 0; i < 50; i++) {
-                System.out.println("二打印: " + i);
-                if (i == 10) {
-                    try {
-                        System.out.println("线程一加入到此线程");
-                        thread1.join();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-            System.out.println("线程二结束");
-        });
-        thread1.start();
-        thread2.start();
-
-    }
-
-    static void test4() {
-
-        Thread thread1 = new Thread(() -> {
-            System.out.println(Thread.currentThread().getName() + "开始运行");
-            for (int i = 0; i < 50; i++) {
-                System.out.println(Thread.currentThread().getName() + " 打印: " + i);
-            }
-            System.out.println(Thread.currentThread().getName() + "线程结束");
-        });
-        Thread thread2 = new Thread(() -> {
-            System.out.println(Thread.currentThread().getName() + "开始运行");
-            for (int i = 0; i < 50; i++) {
-                System.out.println(Thread.currentThread().getName() + " 打印: " + i);
-                if (i == 10) {
-                    try {
-                        System.out.println("线程一加入此线程");
-                        thread1.join();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-            System.out.println(Thread.currentThread() + "线程结束");
-        });
-        thread1.start();
-        thread2.start();
+        try {
+            Thread.sleep(1000);
+            System.out.println(value);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
     }
 
     public static void main(String[] args) {
-        //test1();
-        //test2();
-        //test3();
-        test4();
-
+        test1();
     }
 
 }

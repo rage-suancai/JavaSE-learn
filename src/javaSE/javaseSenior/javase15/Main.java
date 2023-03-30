@@ -1,30 +1,47 @@
 package javaSE.javaseSenior.javase15;
 
 /**
- * wait和notify方法
- * 其实我们之前可能就发现了 Object类还有三个方法我们从来没有使用过 分别是wait() notify()以及notifyAll()
- * 它们其实是需要配合synchronized来使用的 只有在同步代码块中才能使用这些方法 我们来看看它们的作用是什么:
- *                  Object o1 = new Object();
+ * ThreadLocal的使用
+ * 既然每个线程都有一个自己的工作内存 那么能否只在自己的工作内存中创建变量仅供线程自己使用呢?
+ *
+ * 我们可以是ThreadLocal类 来创建工作内存中的变量 它将我们的变量值存储在内部(只能存储一个变量)
+ * 不同的变量访问到ThreadLocal对象时 都只能获取到自己线程所属的变量
+ *                  ThreadLocal<String> local = new ThreadLocal<>(); // 注意: 这是一个泛型类 存储类型为我们要存放的变量类型
+ *
  *                  Thread thread1 = new Thread(() -> {
- *                      synchronized (o1) {
- *                          try {
- *                              System.out.println("开始等待");
- *                              o1.wait(); // 进入等待状态并释放锁
- *                              System.out.println("等待结束");
- *                          } catch (InterruptedException e) {
- *                              e.printStackTrace();
- *                          }
- *                      }
+ *                      local.set("yxsnb"); // 将变量的值给予ThreadLocal
+ *                      System.out.println("变量值已设定");
+ *                      System.out.println(local.get()); // 尝试获取ThreadLocal中存放的变量
  *                  });
  *                  Thread thread2 = new Thread(() -> {
- *                      synchronized (o1) {
- *                          System.out.println("开始唤醒");
- *                          o1.notify(); // 唤醒处于等待状态的线程
- *                          for (int i = 0; i < 50; i++) {
- *                              System.out.println(i);
- *                          }
- *                          // 唤醒后依然需要等待这里的锁释放之前的等待的线程才能继续
+ *                      System.out.println(local.get()); // 尝试获取ThreadLocal中存放的变量
+ *                  });
+ *                  try {
+ *                      thread1.start();
+ *                      Thread.sleep(3000); // 间隔三秒
+ *                      thread2.start();
+ *                  } catch (InterruptedException e) {
+ *                      e.printStackTrace();
+ *                  }
+ *
+ * 上面的例子中 我们开启两个线程分别去访问ThreadLocal对象 我们发现 第一个线程存放的内容 第一个线程可以获取
+ * 但是第二个线程无法获取 我们再来看看第一个线程存入后 第二个线程也存放 是否会覆盖第一个线程存放的内容:
+ *                  Thread thread1 = new Thread(() -> {
+ *                      local.set("yxsnb");
+ *                      System.out.println("线程一变量值已设定");
+ *                      try {
+ *                          Thread.sleep(2000);
+ *                      } catch (InterruptedException e) {
+ *                          e.printStackTrace();
  *                      }
+ *                      System.out.println("线程一读取变量值");
+ *                      System.out.println(local.get()); // 尝试获取ThreadLocal中存放的变量
+ *                  });
+ *                  Thread thread2 = new Thread(() -> {
+ *                      local.set("yyds"); // 将变量的值给予ThreadLocal
+ *                      System.out.println("线程二变量值已经设定");
+ *                      System.out.println("线程二读取变量值"); // 尝试获取ThreadLocal中存放的变量
+ *                      System.out.println(local.get());
  *                  });
  *                  try {
  *                      thread1.start();
@@ -34,35 +51,71 @@ package javaSE.javaseSenior.javase15;
  *                      e.printStackTrace();
  *                  }
  *
- * 我们可以发现 对象的wait()方法会暂时使得此线程进入等待状态 同时会释放当前代码块持有的锁 这时其他线程可以获取到此对象的锁 当其他线程调用对象的notify()方法后
- * 会唤醒刚才变成等待状态的线程(这时并没有立即释放锁) 注意: 必须是在持有锁(同步代码块内部)的情况下使用 否则会抛出异常
+ * 我们发现 即使线程而重新设定了值 也没有影响到线程一存放的值 所以说 不同线程向ThreadLocal存放数据
+ * 只会存放在线程自己的工作空间中 而不会直接存放到主内存中 因此各个线程直接存放的内容互不干扰
  *
- * notifyAll其实和notify一样 也是用于唤醒 但是前者是唤醒所有调用wait()后处于等待的线程 而后者是看运气随机选择一个
+ * 我们发现在线程中创建的子线程 无法获得父线程工作内存中的变量:
+ *                  ThreadLocal<String> local = new ThreadLocal<>();
+ *
+ *                  Thread thread = new Thread(() -> {
+ *                      local.set("yxsnb");
+ *                      new Thread(() -> {
+ *                          System.out.println(local.get());
+ *                      }).start();
+ *                  });
+ *                  thread.start();
+ *
+ * 我们可以使用InheritableThreadLocal来解决:
+ *                  ThreadLocal<String> local = new InheritableThreadLocal<>();
+ *
+ *                  Thread thread = new Thread(() -> {
+ *                      local.set("yxsnb");
+ *                      new Thread(() -> {
+ *                          System.out.println(local.get());
+ *                      }).start();
+ *                  });
+ *                  thread.start();
+ *
+ * 在InheritableThreadLocal存放的内容 会自动向子线程传递
  */
 public class Main {
 
     static void test1() {
 
-        Object o1 = new Object();
-        Thread thread1 = new Thread(() -> {
-            synchronized (o1) {
-                try {
-                    System.out.println("开始等待");
-                    o1.wait();
-                    System.out.println("等待结束");
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
+        ThreadLocal<String> local = new ThreadLocal<>();
+
+        /*Thread thread1 = new Thread(() -> {
+            local.set("yxsnb");
+            System.out.println("变量值已设定");
+            System.out.println(local.get());
         });
         Thread thread2 = new Thread(() -> {
-            synchronized (o1) {
-                System.out.println("开始唤醒");
-                o1.notify();
-                for (int i = 0; i < 50; i++) {
-                    System.out.println(i);
-                }
+            System.out.println(local.get());
+        });
+        try {
+            thread1.start();
+            Thread.sleep(3000);
+            thread2.start();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }*/
+
+        Thread thread1 = new Thread(() -> {
+            local.set("yxsnb");
+            System.out.println("线程一变量值已设定");
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
+            System.out.println("线程一读取变量值");
+            System.out.println(local.get());
+        });
+        Thread thread2 = new Thread(() -> {
+            local.set("yyds");
+            System.out.println("线程二变量值已经设定");
+            System.out.println("线程二读取变量值");
+            System.out.println(local.get());
         });
         try {
             thread1.start();
@@ -76,46 +129,16 @@ public class Main {
 
     static void test2() {
 
-        Object o1 = new Object();
-        Thread thread1 = new Thread(() -> {
-            synchronized (o1) {
-                try {
-                    System.out.println("线程一开始等待");
-                    o1.wait();
-                    System.out.println("线程二等待结束");
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
+        ThreadLocal<String> local1 = new ThreadLocal<>();
+        ThreadLocal<String> local2 = new InheritableThreadLocal<>();
+
+        Thread thread = new Thread(() -> {
+            local2.set("yxsnb");
+            new Thread(() -> {
+                System.out.println(local2.get());
+            }).start();
         });
-        Thread thread2 = new Thread(() -> {
-            synchronized (o1) {
-                try {
-                    System.out.println("线程二开始等待");
-                    o1.wait();
-                    System.out.println("线程二等待结束");
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-        Thread thread3 = new Thread(() -> {
-            synchronized (o1) {
-                System.out.println("开始唤醒");
-                o1.notifyAll();
-                for (int i = 0; i < 50; i++) {
-                    System.out.println(i);
-                }
-            }
-        });
-        try {
-            thread1.start();
-            thread2.start();
-            Thread.sleep(1000);
-            thread3.start();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        thread.start();
 
     }
 

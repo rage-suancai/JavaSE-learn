@@ -1,137 +1,133 @@
 package javaSE.javaseSenior.javase25;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.lang.reflect.Method;
 
 /**
- * 反射修改类的属性
- * 我们还可以通过反射访问一个类中定义的成员字段也可以修改一个类的对象中的成员字段值 通过getField()方法来获取一个类定义的指定字段:
+ * 类加载器
+ * 我们接着来介绍一下类加载器 实际上类加载器就是用于加载一个类的 但是类加载器并不是只有一个
+ *
+ * 思考: 既然说Class对象和加载的类唯一对应 那如果我们手动创建一个JDK包名一样 同时类型名也保持一致 JVM会加载这个类吗?
+ *                  package java.lang;
+ *
+ *                  public class String { // JDK提供的String类也是
+ *
+ *                      public static void main() {
+ *                          System.out.println("我姓马, 我叫马nb");
+ *                      }
+ *
+ *                  }
+ *
+ * 我们发现 会出现以下报错:
+ *                  错误: 在类 java.lang.String 中找不到 main 方法, 请将 main 方法定义为:
+ *                     public static void main(String[] args)
+ *                  否则 JavaFX 应用程序类必须扩展javafx.application.Application
+ *
+ * 但是我们明确在自己写的String类中定义了main方法啊 为什么会找不到此方法呢? 实际上这个ClassLoader的双亲委派机制 在保护Java程序的正常运行:
+ *      实际上类最开始是由BootstrapClassLoader进行加载 BootstrapClassLoader用于加载JDK提供的类
+ *      而我们自己编写的类实际上是AppClassLoader加载的 只有BootstrapClassLoader都没有加载的类 才会让AppClassLoader来加载
+ *      因此我们自己编写的同名包同名类不会被加载 而实际要去启动发是真正的Strong类 也就自然找不到main方法了
+ *
+ *                  static void test1() {
+ *
+ *                      System.out.println(Main.class.getClassLoader()); // 查看当前类的类加载器
+ *                      System.out.println(Main.class.getClassLoader().getParent()); // 父加载器
+ *                      System.out.println(Main.class.getClassLoader().getParent().getParent()); // 爷爷加载器
+ *                      System.out.println(String.class.getClassLoader()); // String类的加载器
+ *
+ *                  }
+ *
+ * 由于BootstrapClassLoader是C++编写的 我们在Java中是获取不到的
+ *
+ * 既然通过ClassLoader就可以加载类 那么我们可以自己手动将class文件加载到JVM中吗? 先写好我们定义的类:
+ *                  package com.javase26.test;
+ *
+ *                  public class Test {
+ *
+ *                      public String text;
+ *
+ *                      public void javase26.test(String str) {
+ *                          System.out.println(text + " > 我是测试方法" + str);
+ *                      }
+ *
+ *                  }
+ *
+ * 编译后 得到一个class文件 我们把它放到根目录下 然后编写一个我们自己的ClassLoader
+ * 因为普通的ClassLoader无法加载二进制文件 因此我们编写一个自定义的来让它支持:
+ *                  static class MyClassLoader extends ClassLoader { // 定义一个自己的ClassLoader
+ *                      public Class<?> defineClass(String name, byte[] b) {
+ *                          return defineClass(name, b, 0, b.length);
+ *                      }
+ *                  }
+ *                  static void test2() {
+ *
+ *                      try {
+ *                          MyClassLoader classLoader = new MyClassLoader();
+ *                          FileInputStream stream = new FileInputStream("Text.class");
+ *                          byte[] bytes = new byte[stream.available()];
+ *                          stream.read(bytes);
+ *                          Class<?> clazz = classLoader.defineClass("javase26.test.Text", bytes); // 类名必须和我们定义的保持一致
+ *                          System.out.println(clazz.getName()); // 成功加载外部class文件
+ *
+ *                          Method test = clazz.getMethod("test", String.class);
+ *                          Object o = clazz.newInstance();
+ *                          test.invoke(o, " xxxx");
+ *                      } catch (IOException | ReflectiveOperationException e) {
+ *                          e.printStackTrace();
+ *                      }
+ *
+ *                  }
+ *
+ * 现在 我们将此class文件读取并解析为Class了 现在我们就可以对此类进行操作了(注意: 我们无法在代码中直接使用此类型 因为它是我们直接加载的)
+ * 我们来试试看创建一个此类的对象并调用其方法:
  *                  try {
- *                      Class<?> clazz = Class.forName("javase25.entity.Student");
- *                      Object instance = clazz.newInstance();
- *                      Field field = clazz.getField("i"); // 获取类的成员字段i
- *                      field.set(instance, 100); // 将类实例instance的成员字段i设置为100
- *                      Method method = clazz.getMethod("javase26.test")
- *                      method.invoke(instance);
- *                  } catch (ReflectiveOperationException e) {
+ *                      Object obj = clazz.newInstance();
+ *                      Method method = clazz.getMethod("test", String.class); // 获取我们定义的test(String str)方法
+ *                      method.invoke(obj, "哥们这瓜多少钱一斤?");
+ *                  } catch (Exception e) {
  *                      e.printStackTrace();
  *                  }
  *
- * 在得到Field之后 我们就可以直接通过set()方法为某个对象 设定此属性的值 比如上面
- * 我们就为instance对象设定值为100 当访问private字段时 同样可以按照上面的操作进行越来越权访问:
+ * 我们来试试看修改成员字段之后 再来调用此方法:
  *                  try {
- *                      Class<?> clazz = Class.forName("javase25.entity.Student");
- *                      Object instance = clazz.newInstance();
- *                      Field field = clazz.getDeclaredField("i"); // 获取类的成员字段i
- *                      field.setAccessible(true);
- *                      field.set(instance, 100); // 将类实例instance的成员字段i设置为100
- *                      Method method = clazz.getMethod("javase26.test");
- *                      method.invoke(instance);
- *                  } catch (ReflectiveOperationException e) {
+ *                      Object obj = clazz.newInstance();
+ *                      Field field = clazz.getField("text); // 获取成员变量 String text
+ *                      field.set(obj, "华强");
+ *                      Method method = clazz.getMethod("test", String.clazz); // 获取我们定义的test(String str)方法
+ *                      method.invoke(obj, "哥们这瓜多少钱一斤?");
+ *                  } catch (Exception e) {
  *                      e.printStackTrace();
  *                  }
  *
- * 现在我们已经知道 反射几乎可以把一个类的老底都给扒出来 如何属性 任何内容 都可以被反射修改 无论权限修饰符是什么
- * 那么 如果我们的字段被标记为final呢? 现在在字段i前面添加final关键字 我再来看看效果:
- *                  private final int i = 10;
- *
- * 这时 当字段为final时 就修改失败了 当然 通过反射可以直接将final修饰符直接去除 去除后 就可以所随意修改内容了 我们来尝试修改integer的value值:
- *                  try {
- *                      Integer i = 10;
- *                      Field field = Integer.class.getDeclaredField("value");
- *                      Field modifiers = Field.class.getDeclaredField("modifiers"); // 这里要获取Field类的modifiers字段进行修改
- *                      modifiers.setAccessible(true);
- *                      modifiers.setInt(field,field.getModifiers() &~ Modifier.FINAL); // 去除final标记
- *                      field.setAccessible(true);
- *                      field.set(i, 100); // 强行设置值
- *                      System.out.println(i);
- *                  } catch (ReflectiveOperationException e) {
- *                      e.printStackTrace();
- *                  }
- *
- * 我们可以发现 反射非常暴力 就连被定义为final字段的值都能强行修改 几乎能够无视一切阻拦 我们来试试看修改一些其他的类型:
- *                  try {
- *                      ArrayList<String> i = new ArrayList<>();
- *                      Field field = ArrayList.class.getDeclaredField("size");
- *                      field.setAccessible(true);
- *                      field.set(i, 10);
- *                      i.add("测试"); // 只添加一个元素
- *                      System.out.println(i.size()); // 大小直接变成11
- *                      i.remove(10); // 瞎移除都不带报错的 淦
- *                  } catch (ReflectiveOperationException e) {
- *                      e.printStackTrace();
- *                  }
- *
- * 实际上 整个ArrayList体系由于我们的反射操作 导致被破坏 因此它已经无法正常工作了
- *
- * 再次强调 在进行反射操作时 必须注意是否安全 虽然拥有了创始主的能力 但是我们不能滥用 我们只能把它当做一个不得已才去使用的工具
+ * 通过这种方式 我们就可以实现外部加载甚至是网络加载一个类 只需要把类文件传递即可 这样就无需再将代码写在本地 而是动态进行传递
+ * 不仅可以一定程度上防止源代码被反编译(只是一定程度上 想破解你代码有的是方法) 而且在更多情况下 我们还可以对byte[]进行加密 保证在传递过程中的完全性
  */
 public class Main {
 
     static void test1() {
 
-        /*try {
-            Class<?> clazz = Class.forName("javase25.entity.Student");
-            //Field name = clazz.getDeclaredField("name");
-            Field age = clazz.getDeclaredField("age");
-            age.setAccessible(true);
-            System.out.println(age.get(new Student("马牛逼", 20)));
-        } catch (ReflectiveOperationException e) {
-            e.printStackTrace();
-        }*/
-
-        try {
-            Integer i = new Integer(88);
-            Field value = Integer.class.getDeclaredField("value");
-            value.setAccessible(true);
-            //System.out.println(value.get(i));
-            value.set(i, 99);
-            System.out.println(i);
-        } catch (ReflectiveOperationException e) {
-            e.printStackTrace();
-        }
+        System.out.println(Main.class.getClassLoader());
+        System.out.println(Main.class.getClassLoader().getParent());
+        System.out.println(Main.class.getClassLoader().getParent().getParent());
+        System.out.println(String.class.getClassLoader());
 
     }
 
     static void test2() {
 
-        /*try {
-            Student student = new Student("马牛逼", 20);
-            Field age = Student.class.getDeclaredField("age");
-            age.setAccessible(true);
-            age.set(student, 30);
-            student.javase26.test();
-        } catch (ReflectiveOperationException e) {
-            e.printStackTrace();
-        }*/
-
         try {
-            Integer i = 10;
-            Field field = Integer.class.getDeclaredField("value");
-            Field modifiers = Field.class.getDeclaredField("modifiers");
-            modifiers.setAccessible(true);
-            modifiers.setInt(field, field.getModifiers() &~ Modifier.FINAL);
-            field.setAccessible(true);
-            field.set(i, 100);
-            System.out.println(i);
-        } catch (ReflectiveOperationException e) {
-            e.printStackTrace();
-        }
+            MyClassLoader classLoader = new MyClassLoader();
+            FileInputStream stream = new FileInputStream("Text.class");
+            byte[] bytes = new byte[stream.available()];
+            stream.read(bytes);
+            Class<?> clazz = classLoader.defineClass("javase26.test.Text", bytes);
+            System.out.println(clazz.getName());
 
-    }
-
-    static void test3() {
-
-        try {
-            ArrayList<String> i = new ArrayList<>();
-            Field field = ArrayList.class.getDeclaredField("size");
-            field.setAccessible(true);
-            field.set(i, 10);
-            i.add("测试");
-            System.out.println(i.size());
-            i.remove(10);
-        } catch (ReflectiveOperationException e) {
+            Method test = clazz.getMethod("test", String.class);
+            Object o = clazz.newInstance();
+            test.invoke(o, " xxxx");
+        } catch (IOException | ReflectiveOperationException e) {
             e.printStackTrace();
         }
 
@@ -139,8 +135,15 @@ public class Main {
 
     public static void main(String[] args) {
         //test1();
-        //test2();
-        test3();
+        test2();
+    }
+
+    static class MyClassLoader extends ClassLoader {
+
+        public Class<?> defineClass(String name, byte[] b) {
+            return defineClass(name, b, 0, b.length);
+        }
+
     }
 
 }

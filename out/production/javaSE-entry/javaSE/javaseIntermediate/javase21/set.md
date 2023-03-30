@@ -106,6 +106,14 @@ Set集合
 
 可以看到最后得到的结果并不是我们插入顺序 而是按照数字的大小进行排列 当然 我们也可以自定义排序规则:
 
+                    public static void main(String[] args) {
 
+                        TreeSet<Integer> set = new TreeSet<>((a, b) -> b - a); // 同样是一个Comparator
+                        set.add(1);
+                        set.add(3);
+                        set.add(2);
+                        System.out.println(set);
 
+                    }
 
+目前 Set集合只是粗略的进行了讲解 但是学习Map之后 我们还会回来看我们Set的底层实现 所以说最重要的还是Map 本节只需要记住Set的性质 使用即可

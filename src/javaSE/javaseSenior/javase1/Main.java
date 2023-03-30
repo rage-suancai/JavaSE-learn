@@ -1,50 +1,132 @@
 package javaSE.javaseSenior.javase1;
 
-/**
- * Java I/O
- * 注意: 这块会涉及到操作系统和计算机组成原理相关内容
- *
- * I/O简而言之 就是输入输出 那么为什么会有I/O呢? 其实I/O无时无刻都在我们身边 比如读取硬盘上的文件
- * 网络文件传输 鼠标键盘输入 也可以是接受单片机发回的数据 而能够支持这些操作的设备就是I/O设备
- *
- * 我们可以大致看一下整个计算机的总线结构:
- *
- *                                 系统总线               内存总线
- *                          CPU <-----------> 北桥芯片 <-----------> 内存
- *                                               |
- *                                               |
- *                                               |
- *                                     PCI总线    |
- *                                  <------------|
- *                                               |
- *                                               |
- *                                       USB     |
- *                                  <----------南桥芯片
- *                                               |
- *                                               |
- *                                        ISA总线 |
- *                                               |
- *                                               |
- *
- * 常见的I/O设备一般都是鼠标 键盘这类通过USB进行传输的外设或者是通过Sata接口或是M.2连接的硬盘
- * 一般情况下 这些设备是由CPU发出指令通过南桥芯片间接进行控制 而不是由CPU直接操作
- *
- * 而我们在程序中 想要读取这些外部连接的I/O设备中的内容 就需要将数据传输到内存中 而需要实现这样的操作 单单凭借一个小的程序是无法做到的 而操作系统
- * (如: Windows/Linux/MacOS)就是专门用于控制和管理计算机硬件和软件资源的软件 我们需要读取一个IO设备的内容时 可以向操作系统发出请求 由操作系统帮助我们来和底层的硬件交互以完成我们的读取/写入请求
- * 从读取硬盘文件的角度来说 不同的操作系统有着不同的文件系统(也就是文件在硬盘中存储排列方式 如Windows就是NTFS MacOS 就是APFS)硬盘只能存储一个个0和1这样的二进制数据 至于0和1如何排列
- * 各自又代表什么意思 就是由操作系统的文件系统来决定的 从网络通信角度来说 网络信号通过网卡等设备翻译为二进制信号 再交给系统进行读取 最后再由操作系统来给到程序
- *
- * JDK提供了一套用于IO操作的框架 根据流的传输方向和读取单位 分为字节流InputStream和OutputStream以及字符流Reader和Writer 当然
- * 这里的Stream并不是前面集合框架认识的Stream 这里的流指的是数据流 通过流 我们就可以一直从流中读取数据 直到取到尽头 或是不断向其中写入数据 直到我们写入完成
- *
- * 字节流一次读取一个字节 也就是一个byte的大小 而字符流顾名思义 就是一次读取一个字符 也就是一个char的大小(在读取纯文本文件的时候更加适合) 由关这两种流 会在后面详细介绍 这个章节我们需要学习16个关键的流
- */
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
 public class Main {
 
+    public static void test1() {
+
+        /*try {
+            FileInputStream inputStream = new FileInputStream("javase26.test.txt");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }*/
+
+        /*FileInputStream inputStream = null;
+        try {
+            inputStream = new FileInputStream("javase26.test.txt");
+        } catch(IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (inputStream != null) {
+                try {
+                    inputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }*/
+
+        try (FileInputStream inputStream = new FileInputStream("javase26.test.txt")){
+
+        } catch(IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    static void test2() {
+
+        /*try (FileInputStream inputStream = new FileInputStream("javase26.test.txt")){
+            System.out.println((char) inputStream.read());
+            System.out.println((char) inputStream.read());
+            System.out.println((char) inputStream.read());
+            System.out.println(inputStream.read());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }*/
+
+        /*try (FileInputStream inputStream = new FileInputStream("javase26.test.txt")){
+            int tmp;
+            while ((tmp = inputStream.read()) != -1) {
+                System.out.println((char) tmp);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }*/
+
+        try (FileInputStream inputStream = new FileInputStream("javase26.test.txt")) {
+            System.out.println(inputStream.available());
+        }catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    static void test3() {
+
+        /*try (FileInputStream inputStream = new FileInputStream("javase26.test.txt")) {
+            byte[] bytes = new byte[inputStream.available()];
+            System.out.println(inputStream.read(bytes));
+            //System.out.println(inputStream.read(bytes, 1, 2));
+            System.out.println(new String(bytes));
+        }catch (IOException e) {
+            e.printStackTrace();
+        }*/
+
+        try (FileInputStream inputStream = new FileInputStream("javase26.test.txt")) {
+            System.out.println(inputStream.skip(1));
+            System.out.println((char) inputStream.read());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    static void test4() {
+
+        /*try (FileOutputStream outputStream = new FileOutputStream("output.txt")) {
+            outputStream.write('N');
+        } catch (IOException e) {
+            e.printStackTrace();
+        }*/
+
+        /*try (FileOutputStream outputStream = new FileOutputStream("output.txt")) {
+            outputStream.write("yxsnb".getBytes());
+            outputStream.write("yxsnb".getBytes(), 0, 1);
+            outputStream.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }*/
+
+        /*try (FileOutputStream outputStream = new FileOutputStream("output.txt", true)) {
+            outputStream.write("lb".getBytes());
+            outputStream.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }*/
+
+        try (FileOutputStream outputStream = new FileOutputStream("output.txt", true)) {
+            FileInputStream inputStream = new FileInputStream("javase26.test.txt");
+            byte[] bytes = new byte[10];
+            int tmp;
+            while ((tmp = inputStream.read(bytes)) != -1) {
+                outputStream.write(bytes, 0 ,tmp);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
     public static void main(String[] args) {
-
-
-
+        //test1();
+        //test2();
+        //test3();
+        test4();
     }
 
 }

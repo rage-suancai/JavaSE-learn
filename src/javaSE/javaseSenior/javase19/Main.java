@@ -1,72 +1,37 @@
 package javaSE.javaseSenior.javase19;
 
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.Queue;
-
 /**
- * java多线程编程实战
- * 这是整个篇章最后一个编程实战内容了 下一章节为反射一般开发者使用比较少 属于选学内容 不编排实战
+ * 反射
+ * 注意: 本章节涉及到JVM相关底层原理 难度会有一些大
  *
- * 生产者与消费者
- * 所谓的生产者消费者模型 是通过一个容器来解决生产者和消费者的强耦合问题 通俗的讲 就是生产者在不断的生产 消费者也在不断的消费
- * 可是消费者消费的产品是生产者生产的 这就必然存在一个中间容器 我们可以把这个容器想象成是一个货架 当货架空的时候 生产者要生产产品
- * 此时消费者在等待生产者往货架上生产产品 而当货架有货物的时候 消费者可以从货架上拿走商品 生产者此时等待货架出现空位 进而补货 这样不断的循环
+ * 反射就是把java类中的各个成分映射成一个个的java对象 即在运行状态中 对于任意的一个类 都能够知道这个类所有的属性和方法
+ * 对于任意一个对象 都能调用它的任意一个方法和属性 这种动态获取信息及动态调用对象方法的功能叫java的反射机制
  *
- * 通过多线程编程 来模拟一个餐厅的2个厨师和3个顾客 假设厨师炒出一个菜的时间为3秒 顾客吃掉菜品的时间为4秒
+ * 简而言之 我们可以通过反射机制 获取到类的一些属性 包括类里面有哪些字段 有哪些方法 继承自哪个类 甚至还能获取到泛型 它的权限非常高 慎重使用
+ *
+ * java类加载机制
+ * 在学习java的反射机制之前 我们需要先了解一下类型的加载机制 一个类是如何被加载和使用的:
+ *
+ *                                     ---------------------------连接Linking----------------------------
+ *                  加载                     验证                        准备                      解析
+ *               (Loading) ----------> (Verification) ----------> (Preparation) ----------> (Resolution)
+ *                                                                                               |
+ *                                                                                               |
+ *                                                                                               |
+ *                                                                                               |
+ *                                      卸载                   使用                    初始化      |
+ *                                  (Unloading) <---------- (Using) <---------- (Initialization)
+ *
+ * 在java程序启动时 JVM会将一部分(class文件)先加载 (并不是所有的类都会在一开始加载) 通过ClassLoader将类加载 在加载过程中 会将类信息提取出来
+ * (存放在元空间中 JDK1.8之前存放在永久代) 同时也会生成一个Class对象存放在内存(堆内存) 注意: 此Class对象只会存在一个 与加载的类唯一对应
+ *
+ * 为了方便各位小伙伴理解 你们就直接理解为默认情况下(仅使用类加载器) 每个类都有且只有一个唯一的Class对象存放在JVM中
+ * 我们无论通过上面方式访问 都是始终是那一个对象 Class对象中包含我们类的一些信息 包括里面有哪些方法 哪些变量等等
  */
 public class Main {
 
-    private static Queue<Object> queue = new LinkedList<>();
-
-    static void Cs() {
-        new Thread(Main::add, "厨师一号").start();
-        new Thread(Main::add, "厨师二号").start();
-    }
-    static void add() {
-
-        while (true) {
-            try {
-                Thread.sleep(3000);
-                synchronized (queue) {
-                    String name = Thread.currentThread().getName();
-                    System.out.println(new Date() + " " + name + "出餐了");
-                    queue.offer(new Object());
-                    queue.notifyAll();
-                }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-
-    }
-
-    static void Gk() {
-        new Thread(Main::take, "顾客一号").start();
-        new Thread(Main::take, "顾客二号").start();
-        new Thread(Main::take, "顾客三号").start();
-    }
-    static void take() {
-
-        while (true) {
-            try {
-                synchronized (queue) {
-                    while (queue.isEmpty()) queue.wait();
-                    queue.poll();
-                    String name = Thread.currentThread().getName();
-                    System.out.println(new Date() + " " + name + "拿到了餐品 正在吃饭...");
-                }
-                Thread.sleep(4000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-
-    }
-
     public static void main(String[] args) {
-        Cs();
-        Gk();
+
     }
 
 }

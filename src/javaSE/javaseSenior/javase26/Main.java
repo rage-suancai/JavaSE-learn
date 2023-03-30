@@ -1,148 +1,77 @@
 package javaSE.javaseSenior.javase26;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.lang.reflect.Method;
-
 /**
- * 类加载器
- * 我们接着来介绍一下类加载器 实际上类加载器就是用于加载一个类的 但是类加载器并不是只有一个
+ * 注解
+ * 注意: 注解跟我们之前讲解的注释完全不是一个概念 不要搞混了
  *
- * 思考: 既然说Class对象和加载的类唯一对应 那如果我们手动创建一个JDK包名一样 同时类型名也保持一致 JVM会加载这个类吗?
- *                  package java.lang;
+ * 其实我们在之前就接触到注解了 比如@Override 表示重写父类方法(当然不加效果也是一样的 此注解在编译时会被自动丢弃) 注解本质上也是一个类型 只不过它的用法比较特殊
  *
- *                  public class String { // JDK提供的String类也是
+ * 注解可以被标注在任意地方 包括方法上 类名上 参数上 成员属性上 注解定义上等 就像注释一样 它相当于我们对于某样东西的一个标记
+ * 而与注释不同的是 注解可以通过反射在运行时获取 注解也可以选择是否保留到运行时
  *
- *                      public static void main() {
- *                          System.out.println("我姓马, 我叫马nb");
+ * 预设注解
+ * JDK预设了以下注解 作用于代码:
+ *
+ *      > @Override - 检查(仅仅是检查 不保留到运行时) 该方法是是否是重写方法 如果发现其父类 或者是引用的接口中并没有该方法时 会报编译错误
+ *      > @Deprecated - 标记过时方法 如果使用该方法 会报编译警告
+ *      > @SuppressWarnings - 指示编译器去忽略注解中声明的警告(仅仅编译阶段 不保留到运行时)
+ *      > @FunctionalInterface - Java8开始支持 标识一个匿名函数或函数式接口
+ *      > @SafeVarargs - Java7开始支持 忽略任何使用参数为泛型变量的方法或构造函数调用产生的警告
+ *
+ * 元注解
+ * 元注解是作用于注解上的注解 用于我们编写自定义的注解:
+ *
+ *      > @Retention - 标识这个注解这么保存 是只在代码中 还是编入class文件中 或者是在运行时可以通过反射访问
+ *      > @Documented - 标记这些注解是否包含在用户文档中
+ *      > @Target - 标记这个注解应该是哪种Java成员
+ *      > @Inherited - 标记这个注解是继承于哪个注解类(默认 注解并没有继续于任何子类)
+ *      > @Repeatable - Java8开发支持 标识某注解可以在同一个声明上使用多次
+ *
+ * 看了这么多预设的注解 你们肯定眼花缭乱了 那我们来看看@Overribe是如何定义的:
+ *
+ *                  @Target(ElementType.METHOD)
+ *                  @Retention()
+ *                  public @interface Override {
+ *
+ *                  }
+ *
+ * 该注解由@Target限定为只能作用于方法上 ElementType是一个枚举类型 用于表示此枚举的作作用域 一个注解可以由很多个作用域 @Retention表示此注解的保留策略
+ * 包括三种策略 在上述中有写到 而这里定义为只在代码中 一般情况下 自定义的注解需要定义一个@Retention和1-n个@Target
+ *
+ * 既然了解了元注解的使用和注解的定义方式 我们就来尝试定义一个自己的注解:
+ *
+ *                  @Target(ElementType.METHOD)
+ *                  @Retention(RetentionPolicy.RUNTIME)
+ *                  public @interface Test {
+ *
+ *                  }
+ *
+ * 这里定义一个Test注解 并将其保留到运行时 同时此注解可以作用于方法或是类上:
+ *
+ *                  @Test
+ *                  public class Main {
+ *
+ *                      @Test
+ *                      public static void main(String[] args) {
+ *
  *                      }
  *
  *                  }
  *
- * 我们发现 会出现以下报错:
- *                  错误: 在类 java.lang.String 中找不到 main 方法, 请将 main 方法定义为:
- *                     public static void main(String[] args)
- *                  否则 JavaFX 应用程序类必须扩展javafx.application.Application
- *
- * 但是我们明确在自己写的String类中定义了main方法啊 为什么会找不到此方法呢? 实际上这个ClassLoader的双亲委派机制 在保护Java程序的正常运行:
- *      实际上类最开始是由BootstrapClassLoader进行加载 BootstrapClassLoader用于加载JDK提供的类
- *      而我们自己编写的类实际上是AppClassLoader加载的 只有BootstrapClassLoader都没有加载的类 才会让AppClassLoader来加载
- *      因此我们自己编写的同名包同名类不会被加载 而实际要去启动发是真正的Strong类 也就自然找不到main方法了
- *
- *                  static void test1() {
- *
- *                      System.out.println(Main.class.getClassLoader()); // 查看当前类的类加载器
- *                      System.out.println(Main.class.getClassLoader().getParent()); // 父加载器
- *                      System.out.println(Main.class.getClassLoader().getParent().getParent()); // 爷爷加载器
- *                      System.out.println(String.class.getClassLoader()); // String类的加载器
- *
- *                  }
- *
- * 由于BootstrapClassLoader是C++编写的 我们在Java中是获取不到的
- *
- * 既然通过ClassLoader就可以加载类 那么我们可以自己手动将class文件加载到JVM中吗? 先写好我们定义的类:
- *                  package com.javase26.test;
- *
- *                  public class Test {
- *
- *                      public String text;
- *
- *                      public void javase26.test(String str) {
- *                          System.out.println(text + " > 我是测试方法" + str);
- *                      }
- *
- *                  }
- *
- * 编译后 得到一个class文件 我们把它放到根目录下 然后编写一个我们自己的ClassLoader
- * 因为普通的ClassLoader无法加载二进制文件 因此我们编写一个自定义的来让它支持:
- *                  static class MyClassLoader extends ClassLoader { // 定义一个自己的ClassLoader
- *                      public Class<?> defineClass(String name, byte[] b) {
- *                          return defineClass(name, b, 0, b.length);
- *                      }
- *                  }
- *                  static void test2() {
- *
- *                      try {
- *                          MyClassLoader classLoader = new MyClassLoader();
- *                          FileInputStream stream = new FileInputStream("Text.class");
- *                          byte[] bytes = new byte[stream.available()];
- *                          stream.read(bytes);
- *                          Class<?> clazz = classLoader.defineClass("javase26.test.Text", bytes); // 类名必须和我们定义的保持一致
- *                          System.out.println(clazz.getName()); // 成功加载外部class文件
- *
- *                          Method test = clazz.getMethod("test", String.class);
- *                          Object o = clazz.newInstance();
- *                          test.invoke(o, " xxxx");
- *                      } catch (IOException | ReflectiveOperationException e) {
- *                          e.printStackTrace();
- *                      }
- *
- *                  }
- *
- * 现在 我们将此class文件读取并解析为Class了 现在我们就可以对此类进行操作了(注意: 我们无法在代码中直接使用此类型 因为它是我们直接加载的)
- * 我们来试试看创建一个此类的对象并调用其方法:
- *                  try {
- *                      Object obj = clazz.newInstance();
- *                      Method method = clazz.getMethod("test", String.class); // 获取我们定义的test(String str)方法
- *                      method.invoke(obj, "哥们这瓜多少钱一斤?");
- *                  } catch (Exception e) {
- *                      e.printStackTrace();
- *                  }
- *
- * 我们来试试看修改成员字段之后 再来调用此方法:
- *                  try {
- *                      Object obj = clazz.newInstance();
- *                      Field field = clazz.getField("text); // 获取成员变量 String text
- *                      field.set(obj, "华强");
- *                      Method method = clazz.getMethod("test", String.clazz); // 获取我们定义的test(String str)方法
- *                      method.invoke(obj, "哥们这瓜多少钱一斤?");
- *                  } catch (Exception e) {
- *                      e.printStackTrace();
- *                  }
- *
- * 通过这种方式 我们就可以实现外部加载甚至是网络加载一个类 只需要把类文件传递即可 这样就无需再将代码写在本地 而是动态进行传递
- * 不仅可以一定程度上防止源代码被反编译(只是一定程度上 想破解你代码有的是方法) 而且在更多情况下 我们还可以对byte[]进行加密 保证在传递过程中的完全性
+ * 这样 一个最简单的注解就被我们创建了
  */
+//@Test
 public class Main {
 
+    /*@Deprecated
     static void test1() {
 
-        System.out.println(Main.class.getClassLoader());
-        System.out.println(Main.class.getClassLoader().getParent());
-        System.out.println(Main.class.getClassLoader().getParent().getParent());
-        System.out.println(String.class.getClassLoader());
+        System.out.println("已弃用");
 
-    }
+    }*/
 
-    static void test2() {
-
-        try {
-            MyClassLoader classLoader = new MyClassLoader();
-            FileInputStream stream = new FileInputStream("Text.class");
-            byte[] bytes = new byte[stream.available()];
-            stream.read(bytes);
-            Class<?> clazz = classLoader.defineClass("javase26.test.Text", bytes);
-            System.out.println(clazz.getName());
-
-            Method test = clazz.getMethod("test", String.class);
-            Object o = clazz.newInstance();
-            test.invoke(o, " xxxx");
-        } catch (IOException | ReflectiveOperationException e) {
-            e.printStackTrace();
-        }
-
-    }
-
+    @Test
     public static void main(String[] args) {
-        //test1();
-        test2();
-    }
-
-    static class MyClassLoader extends ClassLoader {
-
-        public Class<?> defineClass(String name, byte[] b) {
-            return defineClass(name, b, 0, b.length);
-        }
 
     }
 

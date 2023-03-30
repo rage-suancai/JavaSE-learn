@@ -1,103 +1,46 @@
 package javaSE.javaseSenior.javase8;
 
-import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
 
 /**
- * I/O编程实战 (图书管理系统)
- * 要求实现一个图书馆系统(控制台) 支持以下功能: 保存书籍信息(要求持久化) 查询 添加 删除 修改书籍信息
+ * java多线程
+ * 注意: 本章节会涉及到操作系统相关知识
+ *
+ * 在了解多线程之前 让我们回顾一下操作系统中提到的进程概念:
+ *      进程是程序执行的实体 每一个进程都是一个应用程序(比如我们运行QQ 浏览器 LOL 网易云音乐等软件) 都有自己的内存空间
+ *      CPU一个核心同时只能处理一件事情 当出现多个进程需要同时运行时 CPU一般通过时间片轮转调度算法 来实现多个进程的同时运行
+ *
+ * 在早期的计算机中 进程是拥有资源和独立运行的最小单位 也是程序执行的最小单位 但是 如果我希望两个任务同时进行 就必须运行两个进程 由于每个进程都有一个自己的内存空间
+ * 进程之间的通信就变得非常麻烦(比如要共享某些数据) 而执行不同进程会产生上下文切换 非常耗时 那么能否实现一个进程中就能够执行多个任务呢?
+ *
+ * 后来 线程横空出世 一个进程可以有多个线程 线程是程序执行中一个单一的顺序控制流程 现在线程才是程序执行流的最小单元
+ * 各个线程之间共享程序的内存空间(也就是所在进程的内存空间) 上下文切换速度也高于进程
+ *
+ * 在java中 我们从开始 一直以来编写的都是单线程应用程序(运行main()方法的内容) 也就是说只能同时执行一个任务(无论你是调用方法 还是进行计算 始终都是依次进行的 也就是同步的)
+ * 而如果我们希望同时执行多个任务(两个方法同时在运行或者是两个计算同时在运行 也就是异步的) 就需要用到java多线程框架 实际上一个java程序启动后 会创建很多线程 不仅仅只运行一个主线程:
+ *                  ThreadMXBean bean = ManagementFactory.getThreadMXBean();
+ *                  long[] ids = bean.getAllThreadIds();
+ *                  ThreadInfo[] infos = bean.getThreadInfo(ids);
+ *
+ *                  for (ThreadInfo info : infos) {
+ *                      System.out.println(info.getThreadName());
+ *                  }
+ *
+ * 关于除了main线程1默认以外的线程 涉及到JVM相关底层原理 在这里不做讲解 了解就行
  */
 public class Main {
 
-    private static List<Book> LIST = new ArrayList<>();
-
     public static void main(String[] args) {
 
-        readDate();
-        while (true) {
-            Scanner scanner = new Scanner(System.in);
-            System.out.println("=============== 图书管理系统 ===============");
-            System.out.println("1. 录入书籍信息");
-            System.out.println("2. 修改书籍信息");
-            System.out.println("3. 查询书籍列表");
-            System.out.println("4. 删除书籍");
-            System.out.println("(按0键退出管理系统)");
+        ThreadMXBean bean = ManagementFactory.getThreadMXBean();
+        long[] ids = bean.getAllThreadIds();
+        ThreadInfo[] infos = bean.getThreadInfo(ids);
 
-            String str = scanner.nextLine();
-            switch (str) {
-                case "1": insertBook(scanner); break;
-                case "2": modifyBook(scanner); break;
-                case "3": showBook(); break;
-                case "4": deleteBook(scanner); break;
-                case "0": saveDate(); scanner.close(); return;
-            }
+        for (ThreadInfo info : infos) {
+            System.out.println(info.getThreadName());
         }
-
-    }
-
-    @SuppressWarnings("unchecked")
-    private static void readDate() { // IO流持久化
-
-        File file = new File("src/javase8/data");
-        if (file.exists()) {
-            try (ObjectInputStream inputStream = new ObjectInputStream(new FileInputStream("src/javase8/data"))) {
-                LIST = (List<Book>) inputStream.readObject();
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace();
-            }
-        }else {
-            LIST = new ArrayList<>();
-        }
-
-    }
-    private static void saveDate() {
-
-        try (ObjectOutputStream outputStream = new ObjectOutputStream(new FileOutputStream("src/javase8/data"))) {
-            outputStream.writeObject(LIST);
-            outputStream.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    private static void insertBook(Scanner scanner) { // 增加
-
-        LIST.add(new Book()
-                .name(scanner.nextLine())
-                .author(scanner.nextLine())
-                .price(scanner.nextDouble()));
-
-    }
-
-    private static void modifyBook(Scanner scanner) { // 修改
-
-        int i = 0;
-        for (Book book : LIST) System.out.println(++i + "." + book);
-        int index = scanner.nextInt();
-        scanner.nextLine();
-        if (index >= LIST.size()) System.out.println("错误的序号");
-        else LIST
-                    .get(index)
-                    .name(scanner.nextLine())
-                    .author(scanner.nextLine())
-                    .price(scanner.nextDouble());
-
-    }
-
-    private static void showBook() { // 查询
-        LIST.forEach(System.out::println);
-    }
-
-    private static void deleteBook(Scanner scanner) { // 删除
-
-        int i = 0;
-        for (Book book : LIST) System.out.println(++i + "." + book);
-        int index = scanner.nextInt();
-        if (index > LIST.size()) System.out.println("错误的序号");
-        else LIST.remove(index);
 
     }
 

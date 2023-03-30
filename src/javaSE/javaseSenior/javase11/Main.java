@@ -1,186 +1,199 @@
 package javaSE.javaseSenior.javase11;
 
 /**
- * 线程的休眠和中断
- * 我们前面提到 一个线程处于运行状态下 线程的下一个状态会出现以下情况:
- *      > 当CPU给予的运行时间结束时 会从运行状态回到就绪(可运行)状态 等待下一次获得CPU资源
- *      > 当线程进入休眠/阻塞(如等待IO请求)/手动调用wait()方法时 会使用得线程处于等待状态 当等待状态结束后会回到就绪状态
- *      > 当线程出现异常或错误/被stop()方法强行停止/所有代码执行结束时 会使得线程的运行终止
- *
- * 而这个部分我们着重了解一下线程的休眠和中断 首先我们来了解一下如何使得线程进入休眠状态:
- *                  Thread thread = new Thread(() -> {
- *                      try {
- *                          System.out.println("N");
- *                          Thread.sleep(1000); // sleep方法是Thread静态方法 它只作用于当前线程(它知道当前线程是哪个)
- *                          System.out.println("B"); // 调用sleep后 线程会直接进入到等待状态 直到时间结束
- *                      } catch (InterruptedException e) {
- *                          e.printStackTrace();
- *                      }
- *                  });
- *                  thread.start();
- *
- * 通过调用sleep()方法来将当前线程进入休眠 使得线程处于等待状态一段时间 我们发现 此方法显示声明了会抛出一个InterruptedException异常 那么这个异常在什么时候会发生呢?
- *                  Thread thread = new Thread(() -> {
- *                      try {
- *                          Thread.sleep(10000); // 休眠10秒
- *                      } catch (InterruptedException e) {
- *                          e.printStackTrace();
- *                      }
- *                  });
- *                  thread.start();
- *                  try {
- *                      Thread.sleep(3000); // 休眠3秒 一定比线程thread先醒来
- *                      thread.interrupt(); // 调用thread的interrupt方法
- *                  } catch (InterruptedException e) {
- *                      e.printStackTrace();
- *                  }
- *
- * 我们发现 每一个Thread对象中 都有一个interrupt()方法 调用后此方法后 会给指定线程添加一个中断标记以告知线程需要立即停止运行或是进行其他操作
- * 由线程来响应此中断并进行相应的处理 我们前面提到的stop()方法是强制终止线程 这样的做法虽然简单粗暴 但是很有可能导致资源不能完全释放
- * 而这样的发生通知来告知线程需要中断 让线程自行处理后续 会更加合理一些 也是更加推荐的做法 我们来看看interrupt的用法:
- *                  Thread thread = new Thread(() -> {
+ * 线程的优先级
+ * 实际上 java程序中的每个线程并不是平均分配CPU时间的 为了使得线程资源分配更加合理 java采用的是抢占式调度方式 优先级越高的线程
+ * 优先使用CPU资源 我们希望CPU花费更多时间去处理更重要的任务 而不太重要的任务 则可以先让出一部分资源 线程的优先级一般分为以下三种:
+ *      > MIN_PRIORITY 最低优先级
+ *      > MAX_PRIORITY 最高优先级
+ *      > NOM_PRIORITY 常规优先级
+ *                  Thread thread1 = new Thread(() -> {
  *                      System.out.println("线程开始运行");
- *                      while (true) { // 无限循环
- *                          if (Thread.currentThread().isInterrupted()) { // 判断是否存在中断标志
- *                              break; // 响应中断
+ *                  });
+ *                  thread1.start();
+ *                  thread1.setPriority(Thread.MIN_PRIORITY); // 通过使用setPriority方法来设定优先级
+ *
+ * 优先级越高的线程 获得CPU资源的概率会越大 并不是说一定优先级越高的线程先执行
+ *
+ * 线程的礼让和加入
+ * 我们还可以在当前线程的工作不重要时 将CPU资源让位给其他线程 通过使用yield()方法来将当前资源让位给其他同优先级线程:
+ *                  Thread thread1 = new Thread(() -> {
+ *                      System.out.println("线程一开始运行");
+ *                      for (int i = 0; i < 50; i++) {
+ *                          if (i % 5 == 0) {
+ *                              System.out.println("让位");
+ *                              Thread.yield();
+ *                          }
+ *                          System.out.println("一打印: " + i);
+ *                      }
+ *                      System.out.println("线程一结束");
+ *                  });
+ *                  Thread thread2 = new Thread(() -> {
+ *                      System.out.println("线程二开始运行");
+ *                      for (int i = 0; i < 50; i++) {
+ *                          System.out.println("二打印: " + i);
+ *                      }
+ *                  });
+ *                  thread1.start();
+ *                  thread2.start();
+ *
+ * 观察结果 我们发现 在让位之后 尽可能多的在执行线程二的内容
+ *
+ * 当我们希望一个线程等待另一个线程执行完成后再继续进行 我们可以使用join()方法来实现线程的加入:
+ *                  Thread thread1 = new Thread(() -> {
+ *                      System.out.println("线程一开始运行");
+ *                      for (int i = 0; i < 50; i++) {
+ *                          System.out.println("一打印: " + i);
+ *                      }
+ *                      System.out.println("线程一结束");
+ *                  });
+ *                  Thread thread2 = new Thread(() -> {
+ *                      System.out.println("线程二开始运行");
+ *                      for (int i = 0; i < 50; i++) {
+ *                          System.out.println("二打印: " + i);
+ *                          if (i == 10) {
+ *                              try {
+ *                                  System.out.println("线程一加入到此线程");
+ *                                  thread1.join(); // 在i==10时 让线程一加入 先完成线程一的内容 在继续当前内容
+ *                              } catch (InterruptedException e) {
+ *                                  e.printStackTrace();
+ *                              }
  *                          }
  *                      }
- *                      System.out.println("线程被中断了");
+ *                      System.out.println("线程二结束");
  *                  });
- *                  thread.start();
- *                  try {
- *                      Thread.sleep(3000); // 休眠3秒 一定比线程thread先醒来
- *                      thread.interrupt(); // 调用thread的interrupt方法
- *                  } catch (InterruptedException e) {
- *                      e.printStackTrace();
- *                  }
+ *                  thread1.start();
+ *                  thread2.start();
  *
- * 通过isInterrupted()可以判断线程是否存在中断标志 如果存在 说明外部希望当前线程立即停止 也有可能是给当前线程发送一个其他的信号
- * 如果我们并不是希望收到中断信号就是结束程序 而是通知程序做其他事情 我们可以在收到中断信号后 复位中断标记 然后继续做我们的事情:
- *                  Thread thread = new Thread(() -> {
- *                      System.out.println("线程开始运行");
- *                      while (true) {
- *                          if (Thread.currentThread().isInterrupted()) { // 判断是否存在中断标志
- *                              System.out.println("发现中断信号中 复位成功继续运行...");
- *                              Thread.interrupted(); // 复位中断标记(返回值是当前是否由中断标记 这里不用管)
+ * 我们发现 线程一加入后 线程二等待线程一执行的内容全部完成之后 再继续执行线程二的内容
+ * 注意: 线程的加入只是等待另一个线程的完成 并不是将另一个线程和当前线程合并 我们来来看看:
+ *                  Thread thread1 = new Thread(() -> {
+ *                      System.out.println(Thread.currentThread().getName() + "开始运行");
+ *                      for (int i = 0; i < 50; i++) {
+ *                          System.out.println(Thread.currentThread().getName() + "打印: " + i);
+ *                      }
+ *                      System.out.println(Thread.currentThread().getName() + "线程结束");
+ *                  });
+ *                  Thread thread2 = new Thread(() -> {
+ *                      System.out.println(Thread.currentThread().getName() + "开始运行");
+ *                      for (int i = 0; i < 50; i++) {
+ *                          System.out.println(Thread.currentThread().getName() + i);
+ *                          if (i == 10) {
+ *                              try {
+ *                                  System.out.println("线程一加入此线程");
+ *                                  thread1.join(); // 在i==10时 让线程一加入 先完成线程一的内容 在继续当前内容
+ *                              } catch (InterruptedException e) {
+ *                                  e.printStackTrace();
+ *                              }
  *                          }
  *                      }
+ *                      System.out.println(Thread.currentThread() + "线程结束");
  *                  });
- *                  thread.start();
- *                  try {
- *                      Thread.sleep(3000); // 休眠3秒 一定比线程thread先醒来
- *                      thread.interrupt(); // 调用thread的interrupt方法
- *                  } catch (InterruptedException e) {
- *                      e.printStackTrace();
- *                  }
+ *                  thread1.start();
+ *                  thread2.start();
  *
- * 复位中断标记后 会立即清楚中断标记 那么 如果现在我们想要暂停线程呢? 我们希望线程暂时停下 比如等待其他线程执行完成后 再继续运行 那这样的操作怎么实现呢?
- *                  Thread thread = new Thread(() -> {
- *                      System.out.println("线程开始运行");
- *                      Thread.currentThread().suspend(); // 暂停此线程
- *                      System.out.println("线程继续运行");
- *                  });
- *                  thread.start();
- *                  try {
- *                      Thread.sleep(3000); // 休眠3秒 一定比线程thread先醒来
- *                      thread.resume(); // 复位此线程
- *                  } catch (InterruptedException e) {
- *                      e.printStackTrace();
- *                  }
- *
- * 虽然这样很方便地控制了线程的暂停状态 但是这两个方法我们发现实际上也是不推荐的做法 它很容易导致死锁 有关为什么被弃用的原因 我们会在线程锁继续探讨
+ * 实际上 thread2线程只是暂时处于等待状态 当thread1执行结束时 thread2才开始继续执行 只是在效果上看起来好像两个线程合并为一个线程执行而已
  */
 public class Main {
 
     static void test1() {
 
-        /*Thread thread = new Thread(() -> {
-            try {
-                System.out.print("N");
-                Thread.sleep(1000);
-                System.out.println("B");
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        });
-        thread.start();*/
-
         Thread thread = new Thread(() -> {
-            try {
-                Thread.sleep(10000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            System.out.println("线程一开始运行");
         });
         thread.start();
-        try {
-            Thread.sleep(3000);
-            thread.interrupt();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        thread.setPriority(Thread.MIN_PRIORITY);
 
     }
 
     static void test2() {
 
-        /*Thread thread = new Thread(() -> {
-            System.out.println("线程开始运行");
-            while (true) {
-                if (Thread.currentThread().isInterrupted()) {
-                    break;
+        Thread thread1 = new Thread(() -> {
+            System.out.println("线程一开始运行");
+            for (int i = 0; i < 50; i++) {
+                if (i % 5 == 0) {
+                    System.out.println("让位");
+                    Thread.yield();
                 }
+                System.out.println("一打印: " + i);
             }
-            System.out.println("线程被中断了");
+            System.out.println("线程一结束");
         });
-        thread.start();
-        try {
-            Thread.sleep(5000);
-            thread.interrupt();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }*/
-
-        Thread thread = new Thread(() -> {
-            System.out.println("线程开始运行");
-            while (true) {
-                if (Thread.currentThread().isInterrupted()) {
-                    System.out.println("发现中断信号中 复位成功继续运行...");
-                    Thread.interrupted();
-                }
+        Thread thread2 = new Thread(() -> {
+            System.out.println("线程二开始运行");
+            for (int i = 0; i < 50; i++) {
+                System.out.println("二打印: " + i);
             }
         });
-        thread.start();
-        try {
-            Thread.sleep(3000);
-            thread.interrupt();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        thread1.start();
+        thread2.start();
 
     }
 
     static void test3() {
 
-        Thread thread = new Thread(() -> {
-            System.out.println("线程开始运行");
-            Thread.currentThread().suspend();
-            System.out.println("线程继续运行");
+        Thread thread1 = new Thread(() -> {
+            System.out.println("线程一开始运行");
+            for (int i = 0; i < 50; i++) {
+                System.out.println("一打印: " + i);
+            }
+            System.out.println("线程一结束");
         });
-        thread.start();
-        try {
-            Thread.sleep(3000);
-            thread.resume();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        Thread thread2 = new Thread(() -> {
+            System.out.println("线程二开始运行");
+            for (int i = 0; i < 50; i++) {
+                System.out.println("二打印: " + i);
+                if (i == 10) {
+                    try {
+                        System.out.println("线程一加入到此线程");
+                        thread1.join();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            System.out.println("线程二结束");
+        });
+        thread1.start();
+        thread2.start();
+
+    }
+
+    static void test4() {
+
+        Thread thread1 = new Thread(() -> {
+            System.out.println(Thread.currentThread().getName() + "开始运行");
+            for (int i = 0; i < 50; i++) {
+                System.out.println(Thread.currentThread().getName() + " 打印: " + i);
+            }
+            System.out.println(Thread.currentThread().getName() + "线程结束");
+        });
+        Thread thread2 = new Thread(() -> {
+            System.out.println(Thread.currentThread().getName() + "开始运行");
+            for (int i = 0; i < 50; i++) {
+                System.out.println(Thread.currentThread().getName() + " 打印: " + i);
+                if (i == 10) {
+                    try {
+                        System.out.println("线程一加入此线程");
+                        thread1.join();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            System.out.println(Thread.currentThread() + "线程结束");
+        });
+        thread1.start();
+        thread2.start();
 
     }
 
     public static void main(String[] args) {
         //test1();
         //test2();
-        test3();
+        //test3();
+        test4();
+
     }
 
 }

@@ -3,11 +3,7 @@ package javaSE.javaseSenior.javase24.entity;
 public class Student {
 
     String name;
-    int age;
-
-    public Student(String text) {
-
-    }
+    private final int age;
 
     public Student(String name, int age) {
         this.name = name;
@@ -15,6 +11,10 @@ public class Student {
     }
 
     public String yes(String str) {
+        System.out.println(name + " " + age);
+        return name;
+    }
+    public String test(String... str) {
         System.out.println(name + " " + age);
         return name;
     }

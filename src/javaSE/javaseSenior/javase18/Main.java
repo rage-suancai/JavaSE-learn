@@ -1,138 +1,39 @@
 package javaSE.javaseSenior.javase18;
 
-import java.util.Arrays;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.Queue;
 
 /**
- * 守护线程
- * 不要把守护进程和守护线程相提并论 守护进程在后台运行 不需要和用户交互 本质和普通进程类似 而守护线程就不一样了 当其他所有的非守护线程结束之后
- * 守护线程是自动结束 也就是说 java中所有的线程都执行完毕后 守护线程自动结束 因此守护线程不适合进行IO操作 只适合打打杂:
- *                  Thread thread = new Thread(() -> {
- *                      while (true) {
- *                          try {
- *                              System.out.println("程序正常运行中...");
- *                              Thread.sleep(1000);
- *                          } catch (InterruptedException e) {
- *                              e.printStackTrace();
- *                          }
- *                      }
- *                  });
- *                  thread.setDaemon(true); // 设置为守护线程(必须在开始之前 中途是不允许转换的)
- *                  thread.start();
- *                  for (int i = 0; i < 5; i++) {
- *                      try {
- *                          Thread.sleep(1000);
- *                      } catch (InterruptedException e) {
- *                          e.printStackTrace();
- *                      }
- *                  }
+ * java多线程编程实战
+ * 这是整个篇章最后一个编程实战内容了 下一章节为反射一般开发者使用比较少 属于选学内容 不编排实战
  *
- * 在守护线程中产生的新线程也是守护的:
- *                  Thread thread1 = new Thread(() -> {
- *                      Thread it = new Thread(() -> {
- *                          while (true) {
- *                              try {
- *                                  System.out.println("程序正常运行中...");
- *                                  Thread.sleep(1000);
- *                              } catch (InterruptedException e) {
- *                                  e.printStackTrace();
- *                              }
- *                          }
- *                      });
- *                      it.start();
- *                  });
- *                  thread1.setDaemon(true);
- *                  thread1.start();
- *                  for (int i = 0; i < 5; i++) {
- *                      try {
- *                          Thread.sleep(1000);
- *                      } catch (InterruptedException e) {
- *                          e.printStackTrace();
- *                      }
- *                  }
+ * 生产者与消费者
+ * 所谓的生产者消费者模型 是通过一个容器来解决生产者和消费者的强耦合问题 通俗的讲 就是生产者在不断的生产 消费者也在不断的消费
+ * 可是消费者消费的产品是生产者生产的 这就必然存在一个中间容器 我们可以把这个容器想象成是一个货架 当货架空的时候 生产者要生产产品
+ * 此时消费者在等待生产者往货架上生产产品 而当货架有货物的时候 消费者可以从货架上拿走商品 生产者此时等待货架出现空位 进而补货 这样不断的循环
  *
- * 再谈集合类并行方法
- * 其实我们之前再讲解集合类的根接口时 就发现有这样一个方法:
- *                  default Stream<E> parallelStream() {
- *                      return StreamSupport.stream(spliterator(), true);
- *                  }
- *
- * 并行流 其实就是一个多线程执行的流 它通过默认的ForkJoinPool实现(这里不讲解原理) 它可以提高你的多线程任务的速度
- *                  static void test2() {
- *
- *                      List<Integer> list = new ArrayList<>(Arrays.asList(1, 4, 5, 2, 8, 3, 6, 0));
- *                      list
- *                              .parallelStream() // 获得并行流
- *                              .forEach(i -> System.out.println(Thread.currentThread().getName() + " -> " + i));
- *
- *                  }
- *
- * 我们发现 froEach操作的顺序 并不是我们实际List中的顺序 同时每次打印也是不同的线程在执行 我们可以通过调用forEachOrdered()方法来使用单线程维持原本的顺序:
- *                  static void test2() {
- *
- *                      List<Integer> list = new ArrayList<>(Arrays.asList(1, 4, 5, 2, 8, 3, 6, 0));
- *                      list
- *                              .parallelStream()
- *                              .forEachOrdered(System.out::print);
- *
- *                  }
- *
- * 我们之前还发现 再Arrays数组工具类中 也包含大量的并行方法:
- *                  int[] arr = new int[] {1, 4, 5, 2, 9, 3, 6, 0};
- *                  Arrays.parallelSort(arr);
- *                  System.out.println(Arrays.toString(arr));
- *
- * 更多地使用并行方法 可以更加充分地发挥现代计算机多核心的优势 但是同时需要注意多线程产生的异步问题
- *                  int[] arr = new int[] {1, 4, 5, 2, 9, 3, 6, 0};
- *                  Arrays.parallelSetAll(arr, i -> {
- *                      System.out.println(Thread.currentThread().getName());
- *                      return arr[i];
- *                  });
- *                  System.out.println(Arrays.toString(arr));
- *
- * 通过对java多线程的了解 我们就具备了利用多线程解决问题的思维
+ * 通过多线程编程 来模拟一个餐厅的2个厨师和3个顾客 假设厨师炒出一个菜的时间为3秒 顾客吃掉菜品的时间为4秒
  */
 public class Main {
 
-    static void test1() {
+    private static Queue<Object> queue = new LinkedList<>();
 
-        /*Thread thread = new Thread(() -> {
-            while (true) {
-                try {
-                    System.out.println("程序正常运行中...");
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-        thread.setDaemon(true);
-        thread.start();
-        for (int i = 0; i < 5; i++) {
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }*/
+    static void Cs() {
+        new Thread(Main::add, "厨师一号").start();
+        new Thread(Main::add, "厨师二号").start();
+    }
+    static void add() {
 
-        Thread thread1 = new Thread(() -> {
-            Thread it = new Thread(() -> {
-                while (true) {
-                    try {
-                        System.out.println("程序正常运行中...");
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
-            it.start();
-        });
-        thread1.setDaemon(true);
-        thread1.start();
-        for (int i = 0; i < 5; i++) {
+        while (true) {
             try {
-                Thread.sleep(1000);
+                Thread.sleep(3000);
+                synchronized (queue) {
+                    String name = Thread.currentThread().getName();
+                    System.out.println(new Date() + " " + name + "出餐了");
+                    queue.offer(new Object());
+                    queue.notifyAll();
+                }
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -140,30 +41,32 @@ public class Main {
 
     }
 
-    static void test2() {
+    static void Gk() {
+        new Thread(Main::take, "顾客一号").start();
+        new Thread(Main::take, "顾客二号").start();
+        new Thread(Main::take, "顾客三号").start();
+    }
+    static void take() {
 
-        /*List<Integer> list = new ArrayList<>(Arrays.asList(1, 4, 5, 2, 8, 3, 6, 0));
-        list
-                .parallelStream()
-                .forEach(i -> System.out.println(Thread.currentThread().getName() + " -> " + i));
-                //.forEachOrdered(System.out::print);*/
-
-        /*int[] arr = new int[] {1, 4, 5, 2, 9, 3, 6, 0};
-        Arrays.parallelSort(arr);
-        System.out.println(Arrays.toString(arr));*/
-
-        int[] arr = new int[] {1, 4, 5, 2, 9, 3, 6, 0};
-        Arrays.parallelSetAll(arr, i -> {
-            System.out.println(Thread.currentThread().getName());
-            return arr[i];
-        });
-        System.out.println(Arrays.toString(arr));
+        while (true) {
+            try {
+                synchronized (queue) {
+                    while (queue.isEmpty()) queue.wait();
+                    queue.poll();
+                    String name = Thread.currentThread().getName();
+                    System.out.println(new Date() + " " + name + "拿到了餐品 正在吃饭...");
+                }
+                Thread.sleep(4000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
 
     }
 
     public static void main(String[] args) {
-        //test1();
-        test2();
+        Cs();
+        Gk();
     }
 
 }
