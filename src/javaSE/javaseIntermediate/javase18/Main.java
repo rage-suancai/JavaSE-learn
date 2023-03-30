@@ -1,6 +1,7 @@
-package javaSE.javaseIntermediate.javase17;
+package javaSE.javaseIntermediate.javase18;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -41,10 +42,26 @@ public class Main {
 
     static void test3() {
 
-        List<List<String>> list = new LinkedList<>();
+        // List<List<String>> list = new LinkedList<>();
+        // List<String> list = Arrays.asList("A", "B", "C");
+        List<String> list = new ArrayList<>(Arrays.asList("A", "B", "C"));
 
-        list.add(new LinkedList<>());
-        System.out.println(list.get(0).isEmpty());
+        /*list.add(new LinkedList<>());
+        System.out.println(list.get(0).isEmpty());*/
+
+        System.out.println(list);
+
+    }
+
+    static void test4() {
+
+        List<String> list = new ArrayList<>() {{
+            add("A");
+            add("B");
+            add("C");
+        }};
+
+        System.out.println(list);
 
     }
 
@@ -52,7 +69,8 @@ public class Main {
 
         // test1();
         // test2();
-        test3();
+        // test3();
+        test4();
 
     }
 
