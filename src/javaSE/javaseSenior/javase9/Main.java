@@ -87,13 +87,13 @@ public class Main {
 
         //test1();
         //test2();
-        test3();
-        /*try {
+        //test3();
+        try {
             //test4();
             test5();
         } catch (InterruptedException e) {
             e.printStackTrace();
-        }*/
+        }
 
     }
 
