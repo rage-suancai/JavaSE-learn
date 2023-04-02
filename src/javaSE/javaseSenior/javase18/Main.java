@@ -1,53 +1,44 @@
 package javaSE.javaseSenior.javase18;
 
+import java.lang.reflect.Type;
+
 public class Main {
 
     static void test1() {
 
-        try {
-            Class<?> clazz1 = Class.forName("javase21.Student");
-            Class<?> clazz2 = new Student().getClass();
-            Class<Student> clazz3 = Student.class;
+        /*String str = "";
+        System.out.println(str instanceof String);*/
 
-            System.out.println(clazz1 == clazz2);
-            System.out.println(clazz1 == clazz3);
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
+        /*String str = "";
+        System.out.println(str.getClass() == String.class);*/
+
+        Integer i = 10;
+        i.getClass().asSubclass(Number.class);
 
     }
 
     static void test2() {
 
-        /*Class<?> clazz = Student.class;
-        System.out.println(clazz.getName());*/
+        /*Integer i = 10;
+        System.out.println(i.getClass().getSuperclass());*/
 
-        /*Class<?> clazz = int.class;
-        System.out.println(clazz);*/
+        /*Integer i = 10;
+        Type type = i.getClass().getGenericSuperclass();
+        System.out.println(type);
+        System.out.println(type instanceof Class);*/
 
-        /*Class<?> clazz = int.class;
-        System.out.println(Integer.TYPE == int.class);*/
-
-        System.out.println(Integer.TYPE == Integer.class);
-
-    }
-
-    static void test3() {
-
-        Class<String[]> clazz = String[].class;
-        System.out.println(clazz.getName());
-        System.out.println(clazz.getSimpleName());
-        System.out.println(clazz.getTypeName());
-        System.out.println(clazz.getClassLoader());
-        System.out.println(clazz.cast(new Integer("10")));
+        Integer i = 10;
+        for (Class<?> anInterface : i.getClass().getInterfaces())
+            System.out.println(anInterface.getName());
+        for (Type genericInterface : i.getClass().getGenericInterfaces())
+            System.out.println(genericInterface.getTypeName());
 
     }
 
     public static void main(String[] args) {
 
         //test1();
-        //test2();
-        test3();
+        test2();
 
     }
 

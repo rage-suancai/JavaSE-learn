@@ -77,3 +77,25 @@ Class类详解
 
                     }
 
+通过对比 我们发现实际上包装类型都有一个TYPE 其实也就是基本类型的Class 那么包装类的Class和基本类的Class一样吗?
+
+                    public static void main(String[] args) {
+
+                        System.out.println(Integer.TYPE == Integer.class);
+
+                    }
+
+我们发现 包装类型的Class对象并不是基本类型Class对象 数组类型也是一种类型 只是编程不可见 因此我们可以直接获取数组的Class对象:
+
+                    public static void main(String[] args) {
+
+                        Class<String[]> clazz = String[].class;
+                        System.out.println(clazz.getName()); // 获取类名称(得到的是包名+类名的完整名称)
+                        System.out.println(clazz.getSimpleName());
+                        System.out.println(clazz.getTypeName());
+                        System.out.println(clazz.getClassLoader()); // 获取它的类加载器
+                        System.out.println(clazz.cast(new Integer("10"))); // 强制类型转换
+
+                    }
+
+下章节 我们将开始对Class对象的使用进行讲解

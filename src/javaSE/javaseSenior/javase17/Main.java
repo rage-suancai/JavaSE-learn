@@ -15,13 +15,29 @@ public class Main {
 
     static void test2() {
 
+        /*Class<?> clazz = int.class;
+        System.out.println(Integer.TYPE == int.class);*/
 
+        System.out.println(Integer.TYPE == Integer.class);
+
+    }
+
+    static void test3() {
+
+        Class<String[]> clazz = String[].class;
+        System.out.println(clazz.getName());
+        System.out.println(clazz.getSimpleName());
+        System.out.println(clazz.getTypeName());
+        System.out.println(clazz.getClassLoader());
+        //System.out.println(clazz.cast(new Integer("10")));
 
     }
 
     public static void main(String[] args) throws ClassNotFoundException {
 
-        test1();
+        //test1();
+        //test2();
+        test3();
 
     }
 
