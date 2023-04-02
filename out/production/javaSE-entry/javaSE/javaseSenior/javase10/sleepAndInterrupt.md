@@ -57,7 +57,7 @@
                                     break; // 响应中断
                                 }
                             }
-                            System.out.println("线程被中断了！");
+                            System.out.println("线程被中断了");
                         });
                         t.start();
                         try {
@@ -72,6 +72,44 @@
 通过isInterrupted()可以判断线程是否存在中断标志 如果存在 说明外部希望当前线程立即停止 也有可能是给当前线程发送一个其他的信号
 如果我们并不是希望收到中断信号就是结束程序 而是通知程序做其他事情 我们可以在收到中断信号后 复位中断标记 然后继续做我们的事情:
 
+                    public static void main(String[] args) {
 
+                        Thread t = new Thread(() -> {
+                            System.out.println("线程开始运行");
+                            while (true){
+                                if(Thread.currentThread().isInterrupted()){ // 判断是否存在中断标志
+                                    System.out.println("发现中断信号 复位 继续运行...");
+                                    Thread.interrupted(); // 复位中断标记(返回值是当前是否有中断标记 这里不用管)
+                                }
+                            }
+                        });
+                        t.start();
+                        try {
+                            Thread.sleep(3000); // 休眠3秒 一定比线程t先醒来
+                            t.interrupt(); // 调用t的interrupt方法
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
 
+                    }
 
+复位中断标记后 会立即清除中断标记 那么 如果现在我们想暂停线程呢? 我们希望线程暂时停下 比如等待其他线程执行完成后 再继续运行 那这样的操作怎么实现呢?
+
+                    public static void main() {
+                    
+                        Thread t = new Thread() -> {
+                            System.out.println("线程开始运行");
+                            Thread.currentThread().suspend(); // 暂停此线程
+                            System.out.println("线程继续运行");
+                        }
+                        t.start();
+                        try {
+                            Thread.sleep(3000); // 休眠3秒 一定比线程t先醒来
+                            t.resume(); // 恢复此线程
+                        } catch () {
+                            e.printStackTrece();
+                        }
+                    
+                    }
+
+虽然这样很方便地控制了线程的暂停状态 但是这两个方法我们发现实际上也是不推荐的做法 它很容易导致死锁 有关为什么被弃用的原因 我们会在线程锁继续探讨

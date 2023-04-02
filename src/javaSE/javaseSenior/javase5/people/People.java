@@ -1,4 +1,4 @@
-package javaSE.javaseSenior.javase6.people;
+package javaSE.javaseSenior.javase5.people;
 
 import java.io.Serializable;
 

@@ -2,84 +2,88 @@ package javaSE.javaseSenior.javase9;
 
 public class Main {
 
-    static void test1(){
+    static void test1() {
+
+        /*Thread thread = new Thread(() -> {
+            try {
+                System.out.print("N");
+                Thread.sleep(1000);
+                System.out.println("B");
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        });
+        thread.start();*/
 
         Thread thread = new Thread(() -> {
-            System.out.println("我是另一个线程: " + Thread.currentThread().getName());
+            try {
+                Thread.sleep(10000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         });
         thread.start();
+        try {
+            Thread.sleep(3000);
+            thread.interrupt();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
     }
 
     static void test2() {
 
-        Thread thread = new Thread(() -> {
-            System.out.println("我是线程: " + Thread.currentThread().getName());
-            System.out.println("我正在计算 0-10000 之间所有数的和....");
-            int sum = 0;
-            for (int i = 0; i < 10000; i++) {
-                sum += i;
+        /*Thread thread = new Thread(() -> {
+            System.out.println("线程开始运行");
+            while (true) {
+                if (Thread.currentThread().isInterrupted()) {
+                    break;
+                }
             }
-            System.out.println("结果是: " + sum);
+            System.out.println("线程被中断了");
         });
         thread.start();
-        System.out.println("我是主线程");
+        try {
+            Thread.sleep(5000);
+            thread.interrupt();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }*/
+
+        Thread thread = new Thread(() -> {
+            System.out.println("线程开始运行");
+            while (true) {
+                if (Thread.currentThread().isInterrupted()) {
+                    System.out.println("发现中断信号中 复位成功继续运行...");
+                    Thread.interrupted();
+                }
+            }
+        });
+        thread.start();
+        try {
+            Thread.sleep(3000);
+            thread.interrupt();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
     }
 
     static void test3() {
 
-        Thread thread1 = new Thread(() -> {
-            for (int i = 0; i < 200; i++) {
-                System.out.println("我是一号线程: " + i);
-            }
-        });
-        Thread thread2 = new Thread(() ->{
-            for (int i = 0; i < 200; i++) {
-                System.out.println("我是二号线程: " + i);
-            }
-        });
-        thread1.start();
-        thread2.start();
-
-    }
-
-    static void test4() throws InterruptedException {
-
-        /*System.out.print("Y");
-        Thread.sleep(1000);
-        System.out.print("X");
-        Thread.sleep(1000);
-        System.out.print("S");
-        Thread.sleep(1000);
-        System.out.println("NB");*/
-
         Thread thread = new Thread(() -> {
-            Thread me = Thread.currentThread();
-            for (int i = 0; i < 50; i++) {
-                System.out.println("打印: " + i);
-                if (i == 20) me.stop();
-            }
+            System.out.println("线程开始运行");
+            Thread.currentThread().suspend();
+            System.out.println("线程继续运行");
         });
         thread.start();
-
-    }
-
-    private static int value = 0;
-    static void test5() throws InterruptedException {
-
-        Thread thread1 = new Thread(() -> {
-            for (int i = 0; i < 10000; i++) value++;
-            System.out.println("线程一完成");
-        });
-        Thread thread2 = new Thread(() -> {
-            for (int i = 0; i < 10000; i++) value++;
-            System.out.println("线程二完成");
-        });
-        thread1.start();
-        thread2.start();
-        Thread.sleep(1000);
-        System.out.println(value);
+        try {
+            Thread.sleep(3000);
+            thread.resume();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
     }
 
@@ -87,13 +91,7 @@ public class Main {
 
         //test1();
         //test2();
-        //test3();
-        try {
-            //test4();
-            test5();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        test3();
 
     }
 

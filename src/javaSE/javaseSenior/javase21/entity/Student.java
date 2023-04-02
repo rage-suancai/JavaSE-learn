@@ -1,4 +1,4 @@
-package javaSE.javaseSenior.javase23.entity;
+package javaSE.javaseSenior.javase21.entity;
 
 public class Student {
 

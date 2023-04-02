@@ -1,146 +1,78 @@
 package javaSE.javaseSenior.javase24;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-
 /**
- * 反射修改类的属性
- * 我们还可以通过反射访问一个类中定义的成员字段也可以修改一个类的对象中的成员字段值 通过getField()方法来获取一个类定义的指定字段:
- *                  try {
- *                      Class<?> clazz = Class.forName("javase25.entity.Student");
- *                      Object instance = clazz.newInstance();
- *                      Field field = clazz.getField("i"); // 获取类的成员字段i
- *                      field.set(instance, 100); // 将类实例instance的成员字段i设置为100
- *                      Method method = clazz.getMethod("javase26.test")
- *                      method.invoke(instance);
- *                  } catch (ReflectiveOperationException e) {
- *                      e.printStackTrace();
+ * 注解
+ * 注意: 注解跟我们之前讲解的注释完全不是一个概念 不要搞混了
+ *
+ * 其实我们在之前就接触到注解了 比如@Override 表示重写父类方法(当然不加效果也是一样的 此注解在编译时会被自动丢弃) 注解本质上也是一个类型 只不过它的用法比较特殊
+ *
+ * 注解可以被标注在任意地方 包括方法上 类名上 参数上 成员属性上 注解定义上等 就像注释一样 它相当于我们对于某样东西的一个标记
+ * 而与注释不同的是 注解可以通过反射在运行时获取 注解也可以选择是否保留到运行时
+ *
+ * 预设注解
+ * JDK预设了以下注解 作用于代码:
+ *
+ *      > @Override - 检查(仅仅是检查 不保留到运行时) 该方法是是否是重写方法 如果发现其父类 或者是引用的接口中并没有该方法时 会报编译错误
+ *      > @Deprecated - 标记过时方法 如果使用该方法 会报编译警告
+ *      > @SuppressWarnings - 指示编译器去忽略注解中声明的警告(仅仅编译阶段 不保留到运行时)
+ *      > @FunctionalInterface - Java8开始支持 标识一个匿名函数或函数式接口
+ *      > @SafeVarargs - Java7开始支持 忽略任何使用参数为泛型变量的方法或构造函数调用产生的警告
+ *
+ * 元注解
+ * 元注解是作用于注解上的注解 用于我们编写自定义的注解:
+ *
+ *      > @Retention - 标识这个注解这么保存 是只在代码中 还是编入class文件中 或者是在运行时可以通过反射访问
+ *      > @Documented - 标记这些注解是否包含在用户文档中
+ *      > @Target - 标记这个注解应该是哪种Java成员
+ *      > @Inherited - 标记这个注解是继承于哪个注解类(默认 注解并没有继续于任何子类)
+ *      > @Repeatable - Java8开发支持 标识某注解可以在同一个声明上使用多次
+ *
+ * 看了这么多预设的注解 你们肯定眼花缭乱了 那我们来看看@Overribe是如何定义的:
+ *
+ *                  @Target(ElementType.METHOD)
+ *                  @Retention()
+ *                  public @interface Override {
+ *
  *                  }
  *
- * 在得到Field之后 我们就可以直接通过set()方法为某个对象 设定此属性的值 比如上面
- * 我们就为instance对象设定值为100 当访问private字段时 同样可以按照上面的操作进行越来越权访问:
- *                  try {
- *                      Class<?> clazz = Class.forName("javase25.entity.Student");
- *                      Object instance = clazz.newInstance();
- *                      Field field = clazz.getDeclaredField("i"); // 获取类的成员字段i
- *                      field.setAccessible(true);
- *                      field.set(instance, 100); // 将类实例instance的成员字段i设置为100
- *                      Method method = clazz.getMethod("javase26.test");
- *                      method.invoke(instance);
- *                  } catch (ReflectiveOperationException e) {
- *                      e.printStackTrace();
+ * 该注解由@Target限定为只能作用于方法上 ElementType是一个枚举类型 用于表示此枚举的作作用域 一个注解可以由很多个作用域 @Retention表示此注解的保留策略
+ * 包括三种策略 在上述中有写到 而这里定义为只在代码中 一般情况下 自定义的注解需要定义一个@Retention和1-n个@Target
+ *
+ * 既然了解了元注解的使用和注解的定义方式 我们就来尝试定义一个自己的注解:
+ *
+ *                  @Target(ElementType.METHOD)
+ *                  @Retention(RetentionPolicy.RUNTIME)
+ *                  public @interface Test {
+ *
  *                  }
  *
- * 现在我们已经知道 反射几乎可以把一个类的老底都给扒出来 如何属性 任何内容 都可以被反射修改 无论权限修饰符是什么
- * 那么 如果我们的字段被标记为final呢? 现在在字段i前面添加final关键字 我再来看看效果:
- *                  private final int i = 10;
+ * 这里定义一个Test注解 并将其保留到运行时 同时此注解可以作用于方法或是类上:
  *
- * 这时 当字段为final时 就修改失败了 当然 通过反射可以直接将final修饰符直接去除 去除后 就可以所随意修改内容了 我们来尝试修改integer的value值:
- *                  try {
- *                      Integer i = 10;
- *                      Field field = Integer.class.getDeclaredField("value");
- *                      Field modifiers = Field.class.getDeclaredField("modifiers"); // 这里要获取Field类的modifiers字段进行修改
- *                      modifiers.setAccessible(true);
- *                      modifiers.setInt(field,field.getModifiers() &~ Modifier.FINAL); // 去除final标记
- *                      field.setAccessible(true);
- *                      field.set(i, 100); // 强行设置值
- *                      System.out.println(i);
- *                  } catch (ReflectiveOperationException e) {
- *                      e.printStackTrace();
+ *                  @Test
+ *                  public class Main {
+ *
+ *                      @Test
+ *                      public static void main(String[] args) {
+ *
+ *                      }
+ *
  *                  }
  *
- * 我们可以发现 反射非常暴力 就连被定义为final字段的值都能强行修改 几乎能够无视一切阻拦 我们来试试看修改一些其他的类型:
- *                  try {
- *                      ArrayList<String> i = new ArrayList<>();
- *                      Field field = ArrayList.class.getDeclaredField("size");
- *                      field.setAccessible(true);
- *                      field.set(i, 10);
- *                      i.add("测试"); // 只添加一个元素
- *                      System.out.println(i.size()); // 大小直接变成11
- *                      i.remove(10); // 瞎移除都不带报错的 淦
- *                  } catch (ReflectiveOperationException e) {
- *                      e.printStackTrace();
- *                  }
- *
- * 实际上 整个ArrayList体系由于我们的反射操作 导致被破坏 因此它已经无法正常工作了
- *
- * 再次强调 在进行反射操作时 必须注意是否安全 虽然拥有了创始主的能力 但是我们不能滥用 我们只能把它当做一个不得已才去使用的工具
+ * 这样 一个最简单的注解就被我们创建了
  */
+//@Test
 public class Main {
 
+    /*@Deprecated
     static void test1() {
 
-        /*try {
-            Class<?> clazz = Class.forName("javase25.entity.Student");
-            //Field name = clazz.getDeclaredField("name");
-            Field age = clazz.getDeclaredField("age");
-            age.setAccessible(true);
-            System.out.println(age.get(new Student("马牛逼", 20)));
-        } catch (ReflectiveOperationException e) {
-            e.printStackTrace();
-        }*/
+        System.out.println("已弃用");
 
-        try {
-            Integer i = new Integer(88);
-            Field value = Integer.class.getDeclaredField("value");
-            value.setAccessible(true);
-            //System.out.println(value.get(i));
-            value.set(i, 99);
-            System.out.println(i);
-        } catch (ReflectiveOperationException e) {
-            e.printStackTrace();
-        }
+    }*/
 
-    }
-
-    static void test2() {
-
-        /*try {
-            Student student = new Student("马牛逼", 20);
-            Field age = Student.class.getDeclaredField("age");
-            age.setAccessible(true);
-            age.set(student, 30);
-            student.javase26.test();
-        } catch (ReflectiveOperationException e) {
-            e.printStackTrace();
-        }*/
-
-        try {
-            Integer i = 10;
-            Field field = Integer.class.getDeclaredField("value");
-            Field modifiers = Field.class.getDeclaredField("modifiers");
-            modifiers.setAccessible(true);
-            modifiers.setInt(field, field.getModifiers() &~ Modifier.FINAL);
-            field.setAccessible(true);
-            field.set(i, 100);
-            System.out.println(i);
-        } catch (ReflectiveOperationException e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    static void test3() {
-
-        try {
-            ArrayList<String> i = new ArrayList<>();
-            Field field = ArrayList.class.getDeclaredField("size");
-            field.setAccessible(true);
-            field.set(i, 10);
-            i.add("测试");
-            System.out.println(i.size());
-            i.remove(10);
-        } catch (ReflectiveOperationException e) {
-            e.printStackTrace();
-        }
-
-    }
-
+    @Test
     public static void main(String[] args) {
-        //test1();
-        //test2();
-        test3();
+
     }
 
 }

@@ -1,37 +1,87 @@
 package javaSE.javaseSenior.javase19;
 
+import java.lang.reflect.Type;
+
 /**
- * 反射
- * 注意: 本章节涉及到JVM相关底层原理 难度会有一些大
+ * Class对象与多态
+ * 正常情况下 我们使用Instanceof进行类型比较:
+ *                  String str = "";
+ *                  System.out.println(str instanceof String);
  *
- * 反射就是把java类中的各个成分映射成一个个的java对象 即在运行状态中 对于任意的一个类 都能够知道这个类所有的属性和方法
- * 对于任意一个对象 都能调用它的任意一个方法和属性 这种动态获取信息及动态调用对象方法的功能叫java的反射机制
+ * 它可以判断一个对象是否为此接口或是类的实现或是子类 而现在我们有了更多的方式去判断类型:
+ *                  String str = "";
+ *                  System.out.println(str.getClass() == String.class); // 直接判断是否为这个类型
  *
- * 简而言之 我们可以通过反射机制 获取到类的一些属性 包括类里面有哪些字段 有哪些方法 继承自哪个类 甚至还能获取到泛型 它的权限非常高 慎重使用
+ * 如果需要判断是否为子类或是接口/抽象类的实现 我们可以使用asSubClass()方法:
+ *                  Integer i = 10;
+ *                  i.getClass().asSubclass(Number.class); // 当Integer不是Number的子类时 会产生异常
  *
- * java类加载机制
- * 在学习java的反射机制之前 我们需要先了解一下类型的加载机制 一个类是如何被加载和使用的:
+ * 通过getSuperclass()方法 我们可以获取到父类的Class对象:
+ *                  Integer i = 10;
+ *                  System.out.println(i.getClass().getSuperclass());
  *
- *                                     ---------------------------连接Linking----------------------------
- *                  加载                     验证                        准备                      解析
- *               (Loading) ----------> (Verification) ----------> (Preparation) ----------> (Resolution)
- *                                                                                               |
- *                                                                                               |
- *                                                                                               |
- *                                                                                               |
- *                                      卸载                   使用                    初始化      |
- *                                  (Unloading) <---------- (Using) <---------- (Initialization)
+ * 也可以通过getGenericSuperclass()获取父类的原始类型的Type:
+ *                  Integer i = 10;
+ *                  Type type = i.getClass().getGenericSuperclass();
+ *                  System.out.println(type);
+ *                  System.out.println(type instanceof Class);
  *
- * 在java程序启动时 JVM会将一部分(class文件)先加载 (并不是所有的类都会在一开始加载) 通过ClassLoader将类加载 在加载过程中 会将类信息提取出来
- * (存放在元空间中 JDK1.8之前存放在永久代) 同时也会生成一个Class对象存放在内存(堆内存) 注意: 此Class对象只会存在一个 与加载的类唯一对应
+ * 我们发现Type实际上是Class类的父接口 但是获取到的Type的实现并不一定是Class
  *
- * 为了方便各位小伙伴理解 你们就直接理解为默认情况下(仅使用类加载器) 每个类都有且只有一个唯一的Class对象存放在JVM中
- * 我们无论通过上面方式访问 都是始终是那一个对象 Class对象中包含我们类的一些信息 包括里面有哪些方法 哪些变量等等
+ * 同理 我们也可以像上面这样获取父接口:
+ *                  Integer i = 10;
+ *                  for (Class<?> anInterface : i.getClass().getInterfaces()) {
+ *                      System.out.println(anInterface.getName());
+ *                  }
+ *                  for (Type genericInterface : i.getClass().getGenericInterfaces()) {
+ *                      System.out.println(genericInterface.getTypeName());
+ *                  }
  */
 public class Main {
 
-    public static void main(String[] args) {
+    static void test1() {
 
+        /*String str = "";
+        System.out.println(str instanceof String);
+        System.out.println(str.getClass() == String.class);*/
+
+        Integer i = 10;
+        i.getClass().asSubclass(Number.class);
+        System.out.println(i.getClass().getSuperclass());
+
+    }
+
+    static void test2() {
+
+        /*Class<?>[] clazz = ArrayList.class.getInterfaces();
+        for (Class<?> aClass : clazz) {
+            System.out.println(aClass);
+        }*/
+
+        /*Integer i = 10;
+        Type type = i.getClass().getGenericSuperclass();
+        System.out.println(type);
+        System.out.println(type instanceof Class);*/
+
+        /*ParameterizedType type = (ParameterizedType) ArrayList.class.getGenericSuperclass();
+        Type[] types = type.getActualTypeArguments();
+        for (Type type1 : types) {
+            System.out.println(type1);
+        }*/
+
+        Integer i = 10;
+        for (Class<?> anInterface : i.getClass().getInterfaces()) {
+            System.out.println(anInterface.getName());
+        }
+        for (Type genericInterface : i.getClass().getGenericInterfaces()) {
+            System.out.println(genericInterface.getTypeName());
+        }
+
+    }
+
+    public static void main(String[] args) {
+        //test1();
+        test2();
     }
 
 }

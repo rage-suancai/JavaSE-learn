@@ -1,72 +1,96 @@
 package javaSE.javaseSenior.javase18;
 
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.Queue;
-
 /**
- * java多线程编程实战
- * 这是整个篇章最后一个编程实战内容了 下一章节为反射一般开发者使用比较少 属于选学内容 不编排实战
+ * Class类详解
+ * 通过前面 我们了解了类的加载 同时会提取一个类的信息生产Class对象存放在内存中 反射机制其实就是利用这些存放的类信息
+ * 来获取类的信息和操作类 那么如何获取到每个类对应的Class对象呢 我们可以通过以下方式:
+ *                 Class<Student> clazz = Student.class; // 使用class关键字 通过类名获取
+ *                 Class<?> clazz2 = Class.forName("java.lang.Student"); // 使用Class类静态方法forName() 通过包名.类名获取 注意: 返回值是Class<?>
+ *                 Class<?> clazz3 = new Student("cpdd").getClass(); // 通过实例对象获取
  *
- * 生产者与消费者
- * 所谓的生产者消费者模型 是通过一个容器来解决生产者和消费者的强耦合问题 通俗的讲 就是生产者在不断的生产 消费者也在不断的消费
- * 可是消费者消费的产品是生产者生产的 这就必然存在一个中间容器 我们可以把这个容器想象成是一个货架 当货架空的时候 生产者要生产产品
- * 此时消费者在等待生产者往货架上生产产品 而当货架有货物的时候 消费者可以从货架上拿走商品 生产者此时等待货架出现空位 进而补货 这样不断的循环
+ * 注意: Class类也是员工泛型类 只有第一种方法 能够直接获取到对应类型的Class对象 而以下两种方法使用了?通配符作为返回值 但是实际上都和第一个返回的是同一个对象:
+ *                 Class<Student> clazz = Student.class;
+ *                 Class<?> clazz2 = Class.forName("java.lang.Student");
+ *                 Class<?> clazz3 = new Student("cpdd").getClass();
  *
- * 通过多线程编程 来模拟一个餐厅的2个厨师和3个顾客 假设厨师炒出一个菜的时间为3秒 顾客吃掉菜品的时间为4秒
+ *                 System.out.println(clazz == clazz2);
+ *                 System.out.println(clazz == clazz3);
+ *
+ * 通过比较 验证了我们一开始的结论 在JVM中每个类始终只存在一个Class对象 无论通过上面方法获取 都是一样的 现在我们再来看看这个问题:
+ *                 Class<?> clazz = int.class; // 基本数据类型有Class对象吗?
+ *                 System.out.println(clazz);
+ *
+ * 迷了 不是每个类才有Class对象吗 基本数据类型又不是类 这也行吗? 实际上基本数据类型也有对应的Class对象
+ * (反射操作可能需要用到) 而且我们不仅仅可以通过class关键字获取 其实本质是是定义在对应的包装类中的:
+ *                  @SuppressWarnings("unchecked")
+ *                  public static final Class<Integer>  TYPE = (Class<Integer>) Class.getPrimitiveClass("int");
+ *
+ *                  static native Class<?> getPrimitiveClass(String name); // C++实现 并非Java定义
+ *
+ * 每个包装类中(包括Void) 都有一个获取原始类型Class方法 注意: getPrimitiveClass获取的是原始类型 并不是包装类型 只是可以使用包装类来表示
+ *                  Class<?> clazz = int.class;
+ *                  System.out.println(Integer.TYPE == int.class);
+ *
+ * 通过对比 我们发现实际上包装类型都有一个TYPE 其实也就是基本类型的Class 那么包装类的Class和基本类的
+ *
+ * 我们发现 包装类型的对象并不是基本类型Class 数组类型也是一种类型 只是编程不可见 因此我们可以直接获取数组的Class对象:
+ *                  Class<String[]> clazz = String[].class;
+ *                  System.out.println(clazz.getName()); // 获取类名称(得到的是包名+类名的完整名称)
+ *                  System.out.println(clazz.getSimpleName());
+ *                  System.out.println(clazz.getTypeName());
+ *                  System.out.println(clazz.getClassLoader()); // 获取它的类加载器
+ *                  System.out.println(clazz.cast(new Integer("10"))); //
+ *
+ * 马上 我们将开始对Class对象的使用进行学习
  */
 public class Main {
 
-    private static Queue<Object> queue = new LinkedList<>();
+    static void test1() {
 
-    static void Cs() {
-        new Thread(Main::add, "厨师一号").start();
-        new Thread(Main::add, "厨师二号").start();
-    }
-    static void add() {
+        try {
+            Class<?> clazz1 = Class.forName("javase21.Student");
+            Class<?> clazz2 = new Student().getClass();
+            Class<Student> clazz3 = Student.class;
 
-        while (true) {
-            try {
-                Thread.sleep(3000);
-                synchronized (queue) {
-                    String name = Thread.currentThread().getName();
-                    System.out.println(new Date() + " " + name + "出餐了");
-                    queue.offer(new Object());
-                    queue.notifyAll();
-                }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            System.out.println(clazz1 == clazz2);
+            System.out.println(clazz1 == clazz3);
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
         }
 
     }
 
-    static void Gk() {
-        new Thread(Main::take, "顾客一号").start();
-        new Thread(Main::take, "顾客二号").start();
-        new Thread(Main::take, "顾客三号").start();
-    }
-    static void take() {
+    static void test2() {
 
-        while (true) {
-            try {
-                synchronized (queue) {
-                    while (queue.isEmpty()) queue.wait();
-                    queue.poll();
-                    String name = Thread.currentThread().getName();
-                    System.out.println(new Date() + " " + name + "拿到了餐品 正在吃饭...");
-                }
-                Thread.sleep(4000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
+        /*Class<?> clazz = Student.class;
+        System.out.println(clazz.getName());*/
+
+        /*Class<?> clazz = int.class;
+        System.out.println(clazz);*/
+
+        /*Class<?> clazz = int.class;
+        System.out.println(Integer.TYPE == int.class);*/
+
+        System.out.println(Integer.TYPE == Integer.class);
+
+    }
+
+    static void test3() {
+
+        Class<String[]> clazz = String[].class;
+        System.out.println(clazz.getName());
+        System.out.println(clazz.getSimpleName());
+        System.out.println(clazz.getTypeName());
+        System.out.println(clazz.getClassLoader());
+        System.out.println(clazz.cast(new Integer("10")));
 
     }
 
     public static void main(String[] args) {
-        Cs();
-        Gk();
+        //test1();
+        //test2();
+        test3();
+
     }
 
 }

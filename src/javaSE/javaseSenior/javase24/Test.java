@@ -1,4 +1,4 @@
-package javaSE.javaseSenior.javase26;
+package javaSE.javaseSenior.javase24;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

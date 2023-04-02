@@ -1,4 +1,4 @@
-package javaSE.javaseSenior.javase7;
+package javaSE.javaseSenior.javase6;
 
 import java.io.Serializable;
 

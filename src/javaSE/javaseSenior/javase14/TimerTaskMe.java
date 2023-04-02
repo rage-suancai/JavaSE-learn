@@ -1,8 +1,9 @@
-package javaSE.javaseSenior.javase16;
+package javaSE.javaseSenior.javase14;
 
 public class TimerTaskMe {
-    Runnable task;
-    long time;
+
+    private Runnable task;
+    private long time;
 
     public TimerTaskMe(Runnable runnable, long time) {
         this.task = runnable;
