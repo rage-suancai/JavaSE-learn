@@ -33,4 +33,8 @@ public class Stack<E> {
 
     }
 
+    public boolean isEmpty() {
+        return head.next == null;
+    }
+
 }
