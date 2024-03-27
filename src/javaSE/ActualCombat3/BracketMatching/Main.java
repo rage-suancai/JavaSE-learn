@@ -10,7 +10,7 @@ public class Main {
 
     }
 
-    public boolean isValid(String s) {
+    private boolean isValid(String s) {
 
         Stack<Character> stack = new Stack<>();
         char[] chars = s.toCharArray();

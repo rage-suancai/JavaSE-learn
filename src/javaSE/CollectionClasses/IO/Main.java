@@ -24,7 +24,7 @@ public class Main {
 
     }
 
-    public static void byteStreamsTest() {
+    private static void byteStreamsTest() {
 
         /*try(FileInputStream inputStream = new FileInputStream("IO/byteStreams.txt")) {
             int tmp;
@@ -90,7 +90,7 @@ public class Main {
 
     }
 
-    public static void characterStreamTest() {
+    private static void characterStreamTest() {
 
         /*try (FileReader reader = new FileReader("IO/characterStreams.txt")) {
             reader.skip(1);
@@ -115,7 +115,7 @@ public class Main {
 
     }
 
-    public static void FileClassTest() {
+    private static void FileClassTest() {
 
         /*File file = new File("IO/charOutput.txt");
         System.out.println(file.exists());
@@ -138,7 +138,7 @@ public class Main {
 
     }
 
-    public static void bufferTheStream() {
+    private static void bufferTheStream() {
 
         /*try(BufferedInputStream stream = new BufferedInputStream(new FileInputStream("IO/bufferStreams.txt"))) {
             stream.mark(1);
@@ -199,7 +199,7 @@ public class Main {
 
     }
 
-    public static void conversionStreamTest() {
+    private static void conversionStreamTest() {
 
         /*try(OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(("")))) {
             writer.write("lbwnb");
@@ -215,7 +215,7 @@ public class Main {
 
     }
 
-    public static void printStreamTest() {
+    private static void printStreamTest() {
 
         try(PrintStream stream = new PrintStream(new FileOutputStream(""))) {
             stream.println("lbwnb");
@@ -225,7 +225,7 @@ public class Main {
 
     }
 
-    public static void dataStreamTest() {
+    private static void dataStreamTest() {
 
         /*try(DataInputStream dataInputStream = new DataInputStream(new FileInputStream("IO/dataStreams.txt"))) {
             System.out.println(dataInputStream.readBoolean());
@@ -241,7 +241,7 @@ public class Main {
 
     }
 
-    public static void objectStreamTest() {
+    private static void objectStreamTest() {
 
         try(ObjectOutputStream outputStream = new ObjectOutputStream(new FileOutputStream("IO/objectOutPut.txt"));
             ObjectInputStream inputStream = new ObjectInputStream(new FileInputStream("IO/objectOutPut.txt"))) {

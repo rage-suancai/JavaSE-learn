@@ -18,7 +18,7 @@ public class Main {
         char[] chars = str.toCharArray(); int i = 0;
         while (i < chars.length / 2) {
             if (chars[i] != chars[chars.length-1-i]) return false;
-            i++;
+            ++i;
         }
         return true;
 

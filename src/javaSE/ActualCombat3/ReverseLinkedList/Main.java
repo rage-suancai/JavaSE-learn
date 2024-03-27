@@ -8,7 +8,7 @@ public class Main {
 
     }
 
-    public static class ListNode {
+    private static class ListNode {
 
         int val; ListNode next;
 
@@ -27,7 +27,7 @@ public class Main {
 
     }
 
-    public static ListNode reverseList(ListNode head) {
+    private static ListNode reverseList(ListNode head) {
 
         ListNode prev = null, node = head;
         while (node != null) {

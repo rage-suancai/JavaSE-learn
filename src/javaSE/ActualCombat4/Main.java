@@ -82,7 +82,7 @@ public class Main {
     }
 
     private static void select() {
-        for (int i = 0; i < LIST.size(); i++) System.out.println(i + "." + LIST.get(i));
+        for (int i = 0; i < LIST.size(); ++i) System.out.println(i + "." + LIST.get(i));
     }
 
     private static void delete(Scanner scanner) {

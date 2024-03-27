@@ -23,7 +23,7 @@ public class Main {
 
     }
 
-    public static void listTest() {
+    private static void listTest() {
 
         /*List<String> list = new ArrayList<>();
         list.add("科技与狠活"); list.add("上头啊");
@@ -43,7 +43,7 @@ public class Main {
 
     }
 
-    public static void iteratorTest() {
+    private static void iteratorTest() {
 
         /*List<String> list = Arrays.asList("A", "B", "C");
         for (String s : list) System.out.print(s);*/
@@ -65,7 +65,7 @@ public class Main {
 
     }
 
-    public static void queueTest() {
+    private static void queueTest() {
 
         /*Queue<String> queue = new LinkedList<>();
         queue.offer("AAA"); queue.offer("BBB");
@@ -94,7 +94,7 @@ public class Main {
 
     }
 
-    public static void setTest() {
+    private static void setTest() {
 
         /*Set<String> set = new HashSet<>();
         System.out.println(set.add("AAA"));
@@ -120,7 +120,7 @@ public class Main {
 
     }
 
-    public static void mapTest() {
+    private static void mapTest() {
 
         /*Map<Integer, String> map = new HashMap<>();
         map.put(1, "小明"); map.put(2, "小红");
@@ -162,7 +162,7 @@ public class Main {
 
     }
 
-    public static void streamTest() {
+    private static void streamTest() {
 
         /*List<String> list = new ArrayList<>();
         list.add("A"); list.add("B"); list.add("C");
@@ -203,7 +203,7 @@ public class Main {
 
     }
 
-    public static void collectionsTest() {
+    private static void collectionsTest() {
 
         /*List<Integer> list = Arrays.asList(2,3,8,9,10,13);
         System.out.println(Collections.binarySearch(list,8));*/
@@ -223,7 +223,7 @@ public class Main {
 
     }
 
-    public static class IterableTest implements Iterable<String> {
+    private static class IterableTest implements Iterable<String> {
 
         @Override
         public Iterator<String> iterator() {

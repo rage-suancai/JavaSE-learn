@@ -13,7 +13,7 @@ public class Main {
 
     }
 
-    public static void arrayTest() {
+    private static void arrayTest() {
 
         Array<Integer> list = new Array<>();
 
@@ -24,7 +24,7 @@ public class Main {
 
     }
 
-    public static void linkedTest() {
+    private static void linkedTest() {
 
         Linked<Integer> list = new Linked<>();
 
@@ -36,7 +36,7 @@ public class Main {
 
     }
 
-    public static void stackTest() {
+    private static void stackTest() {
 
         Stack<String> stack = new Stack<>();
         stack.push("AAA"); stack.push("BBB"); stack.push("CCC");
@@ -46,7 +46,7 @@ public class Main {
 
     }
 
-    public static void queueTest() {
+    private static void queueTest() {
 
         Queue<Object> stack = new Queue<>();
         stack.offer("AAA"); stack.offer("BBB"); stack.offer("DDD");
@@ -56,7 +56,7 @@ public class Main {
 
     }
 
-    public static void binaryTreeTest() {
+    private static void binaryTreeTest() {
 
         BinaryTree<Character> a = new BinaryTree<>('A');
         BinaryTree<Character> b = new BinaryTree<>('B');
@@ -78,7 +78,7 @@ public class Main {
 
     }
 
-    public static void hashTest() {
+    private static void hashTest() {
 
         Hash<Integer> hash = new Hash<>();
         hash.insert(8);

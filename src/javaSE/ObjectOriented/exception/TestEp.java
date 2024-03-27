@@ -10,7 +10,7 @@ public class TestEp {
 
     }
 
-    public static void test1() {
+    private static void test1() {
 
         try {
            Object object = null; object.toString();
@@ -21,7 +21,7 @@ public class TestEp {
 
     }
 
-    public static void test2() {
+    private static void test2() {
 
         try {
             Object object = null; object.toString();
@@ -33,7 +33,7 @@ public class TestEp {
 
     }
 
-    public static void test3() {
+    private static void test3() {
 
         try {
             int[] arr = new int[1]; arr[1] = 100;
